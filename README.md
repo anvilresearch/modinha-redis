@@ -4,7 +4,7 @@ The RedisDocument mixin for [Modinha](https://github.com/christiansmith/Modinha)
 
 Suppose we've defined an Account model with Modinha like so:
 
-'''javascript
+```javascript
 var Modinha = require('modinha')
   , RedisDocument = require('modinha-redis').RedisDocument
 
@@ -15,11 +15,11 @@ var Account = Modinha.define('accounts', {
 });
 
 Account.extend(RedisDocument);
-'''
+```
 
 RedisDocument will add the following persistence methods to the Account document.
 
-'''
+```
 HTTP                     MODEL METHOD
 
 GET    /accounts         Account.list(options, callback)
@@ -28,22 +28,22 @@ POST   /accounts         Account.insert(data, options, callback)
 PUT    /accounts/id      Account.put(id, data, options, callback)
 PATCH  /accounts/id      Account.patch(id, data, options, callback)
 DELETE /accounts/id      Account.delete(id, callback)
-'''
+```
 
 Extending Account with RedisDocument will also define the following properties on Account.schema:
 
-'''javascript
+```javascript
 _id:      { type: 'string', required: true, default: Model.defaults.uuid },
 created:  { type: 'number', order: true, default: Model.defaults.timestamp },
 modified: { type: 'number', order: true, default: Model.defaults.timestamp }
-'''
+```
 
 Since we defined `unique` and `secondary` properties on email and role, respectively, the mixin will also generate property specific methods for those indexes.
 
-'''javascript
+```javascript
 Account.getByEmail(email, callback)
 Account.listByRole(role, callback)
-'''
+```
 
 ### More about indexing
 
