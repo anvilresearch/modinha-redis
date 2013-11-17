@@ -65,6 +65,8 @@ describe 'RedisDocument', ->
     documents = Document.initialize(data, { private: true })
     jsonDocuments = documents.map (d) -> 
       Document.serialize(d)
+    ids = documents.map (d) ->
+      d._id
 
 
 
@@ -99,7 +101,7 @@ describe 'RedisDocument', ->
         rclient.hmget.restore()
         rclient.zrevrange.restore()
 
-      it 'should query the primary index', ->
+      it 'should query the created index', ->
         rclient.zrevrange.should.have.been.calledWith 'documents:created', 0, 49  
 
       it 'should provide null error', ->
@@ -112,6 +114,9 @@ describe 'RedisDocument', ->
       it 'should not initialize private properties', ->
         instances.forEach (instance) ->
           expect(instance.secret).to.be.undefined
+
+      it 'should provide the list in reverse chronological order', ->
+        rclient.zrevrange.should.have.been.called
 
 
     describe 'by index', ->
@@ -245,6 +250,38 @@ describe 'RedisDocument', ->
           instance.secret.should.equal 'nobody knows'
 
 
+    describe 'in chronological order', ->
+
+      before (done) ->
+        sinon.spy rclient, 'zrange'
+        sinon.stub(rclient, 'hmget').callsArgWith 2, null, jsonDocuments
+        Document.list { order: 'normal' }, (error, results) ->
+          err = error
+          instances = results
+          done()
+
+      after ->
+        rclient.hmget.restore()
+        rclient.zrange.restore()
+
+      it 'should query the created index', ->
+        rclient.zrange.should.have.been.calledWith 'documents:created', 0, 49  
+
+      it 'should provide null error', ->
+        expect(err).to.be.null
+
+      it 'should provide a list of instances', ->
+        instances.forEach (instance) ->
+          expect(instance).to.be.instanceof Document
+
+      it 'should not initialize private properties', ->
+        instances.forEach (instance) ->
+          expect(instance.secret).to.be.undefined
+
+      it 'should provide the list in chronological order', ->
+        rclient.zrange.should.have.been.called
+
+
 
 
   describe 'get', ->
@@ -291,7 +328,6 @@ describe 'RedisDocument', ->
     describe 'by array', ->
 
       before (done) ->
-        ids = documents.map (doc) -> doc._id
         sinon.stub(rclient, 'hmget').callsArgWith 2, null, jsonDocuments
         Document.get ids, (error, results) ->
           err = error
@@ -339,7 +375,6 @@ describe 'RedisDocument', ->
     describe 'with selection', ->
 
       before (done) ->
-        ids = documents.map (doc) -> doc._id
         sinon.spy rclient, 'zrevrange'
         sinon.stub(rclient, 'hmget').callsArgWith 2, null, jsonDocuments
         Document.get ids, { select: [ 'description', 'secret' ] }, (error, results) ->
@@ -843,14 +878,9 @@ describe 'RedisDocument', ->
     describe 'by array', ->
 
       beforeEach (done) ->
-        doc1  = documents[0]
-        doc2  = documents[1]
-        docs  = [doc1, doc2]
-        ids   = [doc1._id, doc2._id]
-
         sinon.spy Document, 'deindex'
         sinon.spy multi, 'hdel'
-        sinon.stub(Document, 'get').callsArgWith(2, null, docs)
+        sinon.stub(Document, 'get').callsArgWith(2, null, documents)
         Document.delete ids, (error, result) ->
           err = error
           deleted = result
@@ -871,8 +901,8 @@ describe 'RedisDocument', ->
         multi.hdel.should.have.been.calledWith 'documents', ids
 
       it 'should deindex each instance', ->
-        Document.deindex.should.have.been.calledWith sinon.match.object, documents[0]
-        Document.deindex.should.have.been.calledWith sinon.match.object, documents[1]
+        documents.forEach (doc) ->
+          Document.deindex.should.have.been.calledWith sinon.match.object, doc
 
 
 
@@ -1163,18 +1193,8 @@ describe 'RedisDocument', ->
   describe 'list by secondary index', ->
 
       before (done) ->
-        doc1  = documents[0]
-        doc2  = documents[1]
-        json1 = jsonDocuments[0]
-        json2 = jsonDocuments[1]
-        docs  = [json1, json2]
-        ids   = [doc2._id, doc1._id]
-
-        sinon.stub(rclient, 'zrevrange')
-          .callsArgWith 3, null, ids
-        sinon.stub(rclient, 'hmget')
-          .callsArgWith 2, null, docs
-
+        sinon.stub(rclient, 'zrevrange').callsArgWith(3, null, ids)
+        sinon.stub(rclient, 'hmget').callsArgWith(2, null, documents)
         Document.listBySecondary 'value', (error, results) ->
           err = error
           instances = results
@@ -1194,8 +1214,66 @@ describe 'RedisDocument', ->
 
 
 
-  describe 'list in chronological order by creation time', ->
-  describe 'list in reverse chronological order by creation time', ->
+  describe 'list newest', ->
+
+    before (done) ->
+      sinon.stub(rclient, 'zrevrange').callsArgWith(3, null, ids)
+      sinon.stub(rclient, 'hmget').callsArgWith(2, null, documents)
+      Document.listNewest (error, result) ->
+       err = error
+       instances = result
+       done()
+       
+    after ->
+      rclient.zrevrange.restore()
+      rclient.hmget.restore()
+
+    it 'should provide a null error', ->
+      expect(err).to.be.null
+
+    it 'should provide a list of instances', ->
+      instances.forEach (instance) ->
+        expect(instance).to.be.instanceof Document
+
+    it 'should provide results in reverse chronological order', ->
+      rclient.zrevrange.should.have.been.called
+
+    it 'should look in the correct index', ->
+      rclient.zrevrange.should.have.been.calledWith 'documents:created'
+
+
+
+
+  describe 'list earliest', ->
+
+    before (done) ->
+      sinon.stub(rclient, 'zrange').callsArgWith(3, null, ids)
+      sinon.stub(rclient, 'hmget').callsArgWith(2, null, documents)
+      Document.listEarliest (error, result) ->
+       err = error
+       instances = result
+       done()
+       
+    after ->
+      rclient.zrange.restore()
+      rclient.hmget.restore()
+
+    it 'should provide a null error', ->
+      expect(err).to.be.null
+
+    it 'should provide a list of instances', ->
+      instances.forEach (instance) ->
+        expect(instance).to.be.instanceof Document
+
+    it 'should provide results in chronological order', ->
+      rclient.zrange.should.have.been.called
+
+    it 'should look in the correct index', ->
+      rclient.zrange.should.have.been.calledWith 'documents:created'
+
+
+
+
   describe 'list in chronological order by modification time', ->
   describe 'list in reverse chronological order by modification time', ->
 
