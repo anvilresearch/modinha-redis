@@ -25,7 +25,7 @@ HTTP                     MODEL METHOD
 GET    /accounts         Account.list(options, callback)
 GET    /accounts/id      Account.get(ids, options, callback)
 POST   /accounts         Account.insert(data, options, callback)
-PUT    /accounts/id      Account.put(id, data, options, callback)
+PUT    /accounts/id      Account.replace(id, data, options, callback)
 PATCH  /accounts/id      Account.patch(id, data, options, callback)
 DELETE /accounts/id      Account.delete(id, callback)
 ```
@@ -47,7 +47,7 @@ Account.listByRole(role, callback)
 
 ### More about indexing
 
-Unique values are enforced by the `insert`, `put`, and `patch` methods. If you write custom methods, you can use Account.enforceUnique(callback) to generate a UniqueValueError.
+Unique values are enforced by the `insert`, `replace`, and `patch` methods. If you write custom methods, you can use Account.enforceUnique(callback) to generate a UniqueValueError.
 
 The default timestamp methods define an ordered index for created and modified. Account.list(options, callback) uses the `accounts:created` index by default to deliver reverse chronological account listings.
 
