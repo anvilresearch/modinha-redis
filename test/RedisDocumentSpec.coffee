@@ -561,7 +561,7 @@ describe 'RedisDocument', ->
 
 
 
-  describe 'put', ->
+  describe 'replace', ->
 
     describe 'with valid data', ->
 
@@ -578,7 +578,7 @@ describe 'RedisDocument', ->
           _id: doc._id
           description: 'updated'
 
-        Document.put doc._id, update, (error, result) ->
+        Document.replace doc._id, update, (error, result) ->
           err = error
           instance = result
           done()
@@ -612,7 +612,7 @@ describe 'RedisDocument', ->
       before (done) ->
         doc = documents[0]
 
-        Document.put doc._id, { description: -1 }, (error, result) ->
+        Document.replace doc._id, { description: -1 }, (error, result) ->
           err = error
           instance = result
           done()
@@ -640,7 +640,7 @@ describe 'RedisDocument', ->
           description: 'updated'
           secret: 'still a secret'
 
-        Document.put doc._id, update, { private: true }, (error, result) ->
+        Document.replace doc._id, update, { private: true }, (error, result) ->
           err = error
           instance = result
           done()
@@ -671,7 +671,7 @@ describe 'RedisDocument', ->
         sinon.stub(Document, 'getByUnique')
           .callsArgWith 1, null, doc        
 
-        Document.put doc._id, doc, (error, result) ->
+        Document.replace doc._id, doc, (error, result) ->
           err = error
           instance = result
           done()
