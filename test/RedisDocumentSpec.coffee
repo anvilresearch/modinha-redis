@@ -108,6 +108,7 @@ describe 'RedisDocument', ->
         expect(err).to.be.null
 
       it 'should provide a list of instances', ->
+        instances.length.should.equal 10
         instances.forEach (instance) ->
           expect(instance).to.be.instanceof Document
 
@@ -122,7 +123,7 @@ describe 'RedisDocument', ->
     describe 'by index', ->
 
       before (done) ->
-        sinon.spy rclient, 'zrevrange'
+        sinon.stub(rclient, 'zrevrange').callsArgWith 3, null, ids
         sinon.stub(rclient, 'hmget').callsArgWith 2, null, jsonDocuments
         Document.list { index: 'documents:secondary:value' }, (error, results) ->
           err = error
@@ -140,6 +141,7 @@ describe 'RedisDocument', ->
         expect(err).to.be.null
 
       it 'should provide a list of instances', ->
+        instances.length.should.equal 10
         instances.forEach (instance) ->
           expect(instance).to.be.instanceof Document
 
@@ -169,6 +171,7 @@ describe 'RedisDocument', ->
         expect(err).to.be.null
 
       it 'should provide a list of instances', ->
+        instances.length.should.equal 10
         instances.forEach (instance) ->
           expect(instance).to.be.instanceof Document
 
@@ -211,6 +214,7 @@ describe 'RedisDocument', ->
         expect(err).to.be.null
 
       it 'should provide a list of instances', ->
+        instances.length.should.equal 10  
         instances.forEach (instance) ->
           expect(instance).to.be.instanceof Document
 
@@ -242,6 +246,7 @@ describe 'RedisDocument', ->
         expect(err).to.be.null
 
       it 'should provide a list of instances', ->
+        instances.length.should.equal 10  
         instances.forEach (instance) ->
           expect(instance).to.be.instanceof Document
 
@@ -271,6 +276,7 @@ describe 'RedisDocument', ->
         expect(err).to.be.null
 
       it 'should provide a list of instances', ->
+        instances.length.should.equal 10  
         instances.forEach (instance) ->
           expect(instance).to.be.instanceof Document
 
@@ -341,6 +347,7 @@ describe 'RedisDocument', ->
         expect(err).to.be.null
 
       it 'should provide a list of instances', ->
+        instances.length.should.equal 10
         instances.forEach (instance) ->
           expect(instance).to.be.instanceof Document
 
@@ -390,6 +397,7 @@ describe 'RedisDocument', ->
         expect(err).to.be.null
 
       it 'should provide a list of instances', ->
+        instances.length.should.equal 10  
         instances.forEach (instance) ->
           expect(instance).to.be.instanceof Document
 
@@ -423,7 +431,7 @@ describe 'RedisDocument', ->
       it 'should provide an instance', ->
         expect(instance).to.be.instanceof Document
 
-      it 'should not initialize private properties', ->
+      it 'should initialize private properties', ->
         expect(instance.secret).to.equal 'nobody knows'
 
 
@@ -664,14 +672,16 @@ describe 'RedisDocument', ->
     describe 'with duplicate unique values', ->
 
       beforeEach (done) ->
-        doc = documents[0]
+        doc1 = documents[0]
+        doc2 = Document.initialize(documents[1]) # copy this doc
+        doc2.unique = doc1.unique
         sinon.spy multi, 'hset'
         sinon.spy multi, 'zadd'
         sinon.spy Document, 'index'
         sinon.stub(Document, 'getByUnique')
-          .callsArgWith 1, null, doc        
+          .callsArgWith 1, null, doc1        
 
-        Document.replace doc._id, doc, (error, result) ->
+        Document.replace doc2._id, doc2, (error, result) ->
           err = error
           instance = result
           done()
@@ -810,14 +820,20 @@ describe 'RedisDocument', ->
     describe 'with duplicate unique values', ->
 
       beforeEach (done) ->
-        doc = documents[0]
+        doc1 = documents[0]
+        doc2 = documents[1]
+        update = Document.initialize(documents[1]) # copy this doc
+        update.unique = doc1.unique
+        
         sinon.spy multi, 'hset'
         sinon.spy multi, 'zadd'
         sinon.spy Document, 'index'
+        sinon.stub(Document, 'get')
+          .callsArgWith 2, null, doc2
         sinon.stub(Document, 'getByUnique')
-          .callsArgWith 1, new Document.UniqueValueError()        
+          .callsArgWith 1, null, doc1        
 
-        Document.patch doc._id, doc, (error, result) ->
+        Document.patch doc2._id, update, (error, result) ->
           err = error
           instance = result
           done()
@@ -826,6 +842,7 @@ describe 'RedisDocument', ->
         multi.hset.restore()
         multi.zadd.restore()
         Document.index.restore()
+        Document.get.restore()
         Document.getByUnique.restore()
 
       it 'should provide a unique value error', ->
@@ -1176,8 +1193,11 @@ describe 'RedisDocument', ->
     describe 'with duplicated values', ->
 
       before (done) ->
-        sinon.stub(Document, 'getByUnique').callsArgWith 1, null, documents[0]
-        Document.enforceUnique documents[0], (error) ->
+        doc1 = documents[0]
+        doc2 = Document.initialize(documents[1]) # copy this doc
+        doc2.unique = doc1.unique
+        sinon.stub(Document, 'getByUnique').callsArgWith 1, null, doc1
+        Document.enforceUnique doc2, (error) ->
           err = error
           done()
 
