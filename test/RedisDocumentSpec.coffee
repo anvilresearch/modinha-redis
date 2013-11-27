@@ -1232,6 +1232,26 @@ describe 'RedisDocument', ->
           expect(instance).to.be.instanceof Document
 
 
+  describe 'list by reference', ->
+
+      before (done) ->
+        sinon.stub(rclient, 'zrevrange').callsArgWith(3, null, ids)
+        sinon.stub(rclient, 'hmget').callsArgWith(2, null, documents)
+        Document.listByReference 'id', (error, results) ->
+          err = error
+          instances = results
+          done()
+
+      after ->
+        rclient.zrevrange.restore()
+        rclient.hmget.restore()        
+
+      it 'should provide a null error', ->
+        expect(err).to.be.null
+
+      it 'should provide instances', ->
+        instances.forEach (instance) ->
+          expect(instance).to.be.instanceof Document    
 
 
   describe 'list newest', ->
