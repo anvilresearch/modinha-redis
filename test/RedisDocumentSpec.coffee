@@ -761,6 +761,10 @@ describe 'RedisDocument', ->
       it 'should not provide private properties', ->
         expect(instance.secret).to.be.undefined
 
+      it 'should not generate default values', ->
+        instance._id.should.equal documents[0]._id
+        instance.created.should.equal documents[0].created
+
       it 'should overwrite the stored data', ->
         multi.hset.should.have.been.calledWith 'documents', instance._id, sinon.match('"description":"updated"')
 
