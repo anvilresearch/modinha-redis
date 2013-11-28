@@ -575,16 +575,14 @@ describe 'RedisDocument', ->
 
       before (done) ->
         doc = documents[0]
-        json = jsonDocuments[0]
-
-        sinon.stub(rclient, 'hmget').callsArgWith(2, null, [json])
-        sinon.spy Document, 'reindex'
-        sinon.spy multi, 'hset'
-        sinon.spy multi, 'zadd'
-
         update =
           _id: doc._id
           description: 'updated'
+
+        sinon.stub(Document, 'get').callsArgWith(2, null, doc)
+        sinon.spy Document, 'reindex'
+        sinon.spy multi, 'hset'
+        sinon.spy multi, 'zadd'
 
         Document.replace doc._id, update, (error, result) ->
           err = error
@@ -592,10 +590,10 @@ describe 'RedisDocument', ->
           done()
 
       after ->
-        rclient.hmget.restore()
+        Document.get.restore()
         Document.reindex.restore()
         multi.hset.restore()
-        multi.zadd.restore()
+        multi.zadd.restore()        
 
       it 'should provide a null error', ->
         expect(err).to.be.null
@@ -612,7 +610,26 @@ describe 'RedisDocument', ->
         expect(instance.secondary).to.be.undefined
 
       it 'should reindex the instance', ->
-        Document.reindex.should.have.been.calledWith sinon.match.object, sinon.match(update), Document.initialize(documents[0])
+        Document.reindex.should.have.been.calledWith sinon.match.object, sinon.match(update), documents[0]
+
+
+    describe 'with unknown document', ->
+
+      before (done) ->
+        sinon.stub(Document, 'get').callsArgWith(2, null, null)
+        Document.replace 'unknown', {}, (error, result) ->
+          err = error
+          instance = result
+          done()
+
+      after ->
+        Document.get.restore()
+
+      it 'should provide an null error', ->
+        expect(err).to.be.null
+
+      it 'should not provide an instance', ->
+        expect(instance).to.be.null  
 
 
     describe 'with invalid data', ->
@@ -675,9 +692,8 @@ describe 'RedisDocument', ->
         doc1 = documents[0]
         doc2 = Document.initialize(documents[1]) # copy this doc
         doc2.unique = doc1.unique
-        sinon.spy multi, 'hset'
-        sinon.spy multi, 'zadd'
         sinon.spy Document, 'index'
+        sinon.stub(Document, 'get').callsArgWith(2, null, doc2)
         sinon.stub(Document, 'getByUnique')
           .callsArgWith 1, null, doc1        
 
@@ -687,8 +703,7 @@ describe 'RedisDocument', ->
           done()
 
       afterEach ->
-        multi.hset.restore()
-        multi.zadd.restore()
+        Document.get.restore()
         Document.index.restore()
         Document.getByUnique.restore()
 
