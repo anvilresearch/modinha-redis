@@ -768,6 +768,25 @@ describe 'RedisDocument', ->
         Document.reindex.should.have.been.calledWith sinon.match.object, sinon.match(update), sinon.match(documents[0])
 
 
+    describe 'with unknown document', ->
+
+      before (done) ->
+        sinon.stub(Document, 'get').callsArgWith(2, null, null)
+        Document.patch 'unknown', {}, (error, result) ->
+          err = error
+          instance = result
+          done()
+
+      after ->
+        Document.get.restore()
+
+      it 'should provide an null error', ->
+        expect(err).to.be.null
+
+      it 'should not provide an instance', ->
+        expect(instance).to.be.null  
+
+
     describe 'with invalid data', ->
 
       before (done) ->
