@@ -50,6 +50,9 @@ describe 'RedisDocument', ->
 
     Document = Modinha.define 'documents', schema  
     Document.extend RedisDocument
+    
+    Document.__redis = redis
+    Document.__client = client
 
     # Mock data
     data = []
