@@ -768,6 +768,9 @@ describe 'RedisDocument', ->
         instance._id.should.equal documents[0]._id
         instance.created.should.equal documents[0].created
 
+      it 'should update the "modified" timestamp', ->
+        instance.modified.should.not.equal documents[0].created
+
       it 'should overwrite the stored data', ->
         multi.hset.should.have.been.calledWith 'documents', instance._id, sinon.match('"description":"updated"')
 
