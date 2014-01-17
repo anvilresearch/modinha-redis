@@ -47,6 +47,7 @@ describe 'RedisDocument', ->
       secret:      { type: 'string', private:   true }
       secondary:   { type: 'string', secondary: true }
       reference:   { type: 'string', reference: { collection: 'references' } }
+      indexed:     { type: 'string' }
 
     Document = Modinha.define 'documents', schema
     Document.extend RedisDocument
@@ -54,7 +55,7 @@ describe 'RedisDocument', ->
     Document.indexSet
       params: '_id'
       key: 'whatever:$:youwant'
-      value: 'reference'
+      value: 'indexed'
 
     Document.__redis = redis
     Document.__client = client
@@ -68,6 +69,7 @@ describe 'RedisDocument', ->
         unique: Faker.random.number(1000).toString()
         secondary: Faker.random.number(1000).toString()
         reference: Faker.random.number(1000).toString()
+        indexed: Faker.random.number(1000).toString()
         secret: 'nobody knows'
 
     documents = Document.initialize(data, { private: true })
@@ -999,13 +1001,11 @@ describe 'RedisDocument', ->
       instance = documents[0]
       sinon.spy multi, 'hset'
       sinon.spy multi, 'zadd'
-      sinon.spy multi, 'sadd'
       Document.index m, instance
 
     after ->
       multi.hset.restore()
       multi.zadd.restore()
-      multi.sadd.restore()
 
     it 'should index an object by unique values', ->
       multi.hset.should.have.been.calledWith 'documents:unique', instance.unique, instance._id
@@ -1025,7 +1025,7 @@ describe 'RedisDocument', ->
       multi.zadd.should.have.been.calledWith "references:#{instance.reference}:documents", instance.created, instance._id
 
     it 'should index an object by set', ->
-      multi.sadd.should.have.been.calledWith "whatever:#{instance._id}:youwant", instance.reference
+      multi.zadd.should.have.been.calledWith "whatever:#{instance._id}:youwant", instance.created, instance.indexed
 
 
 
@@ -1037,13 +1037,11 @@ describe 'RedisDocument', ->
       instance = documents[0]
       sinon.spy multi, 'hdel'
       sinon.spy multi, 'zrem'
-      sinon.spy multi, 'srem'
       Document.deindex m, instance
 
     after ->
       multi.hdel.restore()
       multi.zrem.restore()
-      multi.srem.restore()
 
     it 'should remove an object from unique index', ->
       multi.hdel.should.have.been.calledWith 'documents:unique', instance.unique
@@ -1061,7 +1059,7 @@ describe 'RedisDocument', ->
       multi.zrem.should.have.been.calledWith "references:#{instance.reference}:documents", instance._id
 
     it 'should remove an object from a set index', ->
-      multi.srem.should.have.been.calledWith "whatever:#{instance._id}:youwant", instance.reference
+      multi.zrem.should.have.been.calledWith "whatever:#{instance._id}:youwant", instance.indexed
 
 
 
@@ -1072,16 +1070,12 @@ describe 'RedisDocument', ->
       sinon.spy multi, 'zadd'
       sinon.spy multi, 'hdel'
       sinon.spy multi, 'zrem'
-      sinon.spy multi, 'srem'
-      sinon.spy multi, 'sadd'
 
     afterEach ->
       multi.hset.restore()
       multi.zadd.restore()
       multi.hdel.restore()
       multi.zrem.restore()
-      multi.srem.restore()
-      multi.sadd.restore()
 
 
     describe 'with changed unique value', ->
@@ -1228,20 +1222,19 @@ describe 'RedisDocument', ->
 
         instance =
           _id: 'id'
-          reference: '1235'
+          indexed: '1235'
           created: '3456'
         original =
           _id: 'id'
-          reference: '1234'
+          indexed: '1234'
 
         Document.reindex m, instance, original
 
       it 'should remove old value', ->
-        multi.srem.should.have.been.calledWith "whatever:#{instance._id}:youwant", original.reference
-
+        multi.zrem.should.have.been.calledWith "whatever:#{instance._id}:youwant", original.indexed
 
       it 'should add new value', ->
-        multi.sadd.should.have.been.calledWith "whatever:#{instance._id}:youwant", instance.reference
+        multi.zadd.should.have.been.calledWith "whatever:#{instance._id}:youwant", instance.created, instance.indexed
 
 
 
