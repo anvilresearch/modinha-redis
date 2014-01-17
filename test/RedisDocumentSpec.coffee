@@ -1037,11 +1037,13 @@ describe 'RedisDocument', ->
       instance = documents[0]
       sinon.spy multi, 'hdel'
       sinon.spy multi, 'zrem'
+      sinon.spy multi, 'srem'
       Document.deindex m, instance
 
     after ->
       multi.hdel.restore()
       multi.zrem.restore()
+      multi.srem.restore()
 
     it 'should remove an object from unique index', ->
       multi.hdel.should.have.been.calledWith 'documents:unique', instance.unique
@@ -1058,6 +1060,8 @@ describe 'RedisDocument', ->
     it 'should remove an object from a referenced object index', ->
       multi.zrem.should.have.been.calledWith "references:#{instance.reference}:documents", instance._id
 
+    it 'should remove an object from a set index', ->
+      multi.srem.should.have.been.calledWith "whatever:#{instance._id}:youwant", instance.reference
 
 
 
@@ -1068,12 +1072,16 @@ describe 'RedisDocument', ->
       sinon.spy multi, 'zadd'
       sinon.spy multi, 'hdel'
       sinon.spy multi, 'zrem'
+      sinon.spy multi, 'srem'
+      sinon.spy multi, 'sadd'
 
     afterEach ->
       multi.hset.restore()
       multi.zadd.restore()
       multi.hdel.restore()
       multi.zrem.restore()
+      multi.srem.restore()
+      multi.sadd.restore()
 
 
     describe 'with changed unique value', ->
@@ -1211,6 +1219,30 @@ describe 'RedisDocument', ->
       it 'should not reindex the object id by reference', ->
         multi.zadd.should.not.have.been.called
         multi.zrem.should.not.have.been.called
+
+
+    describe 'set', ->
+
+      beforeEach ->
+        m = client.multi()
+
+        instance =
+          _id: 'id'
+          reference: '1235'
+          created: '3456'
+        original =
+          _id: 'id'
+          reference: '1234'
+
+        Document.reindex m, instance, original
+
+      it 'should remove old value', ->
+        multi.srem.should.have.been.calledWith "whatever:#{instance._id}:youwant", original.reference
+
+
+      it 'should add new value', ->
+        multi.sadd.should.have.been.calledWith "whatever:#{instance._id}:youwant", instance.reference
+
 
 
 
