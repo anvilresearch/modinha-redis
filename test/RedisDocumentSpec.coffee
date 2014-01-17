@@ -38,19 +38,24 @@ describe 'RedisDocument', ->
 
   {Document,data,documents,jsonDocuments} = {}
   {err,instance,instances,update,deleted,original,ids} = {}
-  
+
 
   before ->
     schema =
       description: { type: 'string', required:  true }
       unique:      { type: 'string', unique:    true }
       secret:      { type: 'string', private:   true }
-      secondary:   { type: 'string', secondary: true } 
-      reference:   { type: 'string', reference: { collection: 'references' } }  
+      secondary:   { type: 'string', secondary: true }
+      reference:   { type: 'string', reference: { collection: 'references' } }
 
-    Document = Modinha.define 'documents', schema  
+    Document = Modinha.define 'documents', schema
     Document.extend RedisDocument
-    
+
+    Document.indexSet
+      params: '_id'
+      key: 'whatever:$:youwant'
+      value: 'reference'
+
     Document.__redis = redis
     Document.__client = client
 
@@ -66,7 +71,7 @@ describe 'RedisDocument', ->
         secret: 'nobody knows'
 
     documents = Document.initialize(data, { private: true })
-    jsonDocuments = documents.map (d) -> 
+    jsonDocuments = documents.map (d) ->
       Document.serialize(d)
     ids = documents.map (d) ->
       d._id
@@ -105,7 +110,7 @@ describe 'RedisDocument', ->
         rclient.zrevrange.restore()
 
       it 'should query the created index', ->
-        rclient.zrevrange.should.have.been.calledWith 'documents:created', 0, 49  
+        rclient.zrevrange.should.have.been.calledWith 'documents:created', 0, 49
 
       it 'should provide null error', ->
         expect(err).to.be.null
@@ -217,7 +222,7 @@ describe 'RedisDocument', ->
         expect(err).to.be.null
 
       it 'should provide a list of instances', ->
-        instances.length.should.equal 10  
+        instances.length.should.equal 10
         instances.forEach (instance) ->
           expect(instance).to.be.instanceof Document
 
@@ -249,7 +254,7 @@ describe 'RedisDocument', ->
         expect(err).to.be.null
 
       it 'should provide a list of instances', ->
-        instances.length.should.equal 10  
+        instances.length.should.equal 10
         instances.forEach (instance) ->
           expect(instance).to.be.instanceof Document
 
@@ -273,13 +278,13 @@ describe 'RedisDocument', ->
         rclient.zrange.restore()
 
       it 'should query the created index', ->
-        rclient.zrange.should.have.been.calledWith 'documents:created', 0, 49  
+        rclient.zrange.should.have.been.calledWith 'documents:created', 0, 49
 
       it 'should provide null error', ->
         expect(err).to.be.null
 
       it 'should provide a list of instances', ->
-        instances.length.should.equal 10  
+        instances.length.should.equal 10
         instances.forEach (instance) ->
           expect(instance).to.be.instanceof Document
 
@@ -379,7 +384,7 @@ describe 'RedisDocument', ->
 
       it 'should provide an empty array', ->
         Array.isArray(instances).should.be.true
-        instances.length.should.equal 0     
+        instances.length.should.equal 0
 
 
     describe 'with selection', ->
@@ -400,7 +405,7 @@ describe 'RedisDocument', ->
         expect(err).to.be.null
 
       it 'should provide a list of instances', ->
-        instances.length.should.equal 10  
+        instances.length.should.equal 10
         instances.forEach (instance) ->
           expect(instance).to.be.instanceof Document
 
@@ -492,8 +497,8 @@ describe 'RedisDocument', ->
 
       after ->
         multi.hset.restore()
-        multi.zadd.restore() 
-        Document.index.restore()   
+        multi.zadd.restore()
+        Document.index.restore()
 
       it 'should provide a validation error', ->
         err.should.be.instanceof Modinha.ValidationError
@@ -596,7 +601,7 @@ describe 'RedisDocument', ->
         Document.get.restore()
         Document.reindex.restore()
         multi.hset.restore()
-        multi.zadd.restore()        
+        multi.zadd.restore()
 
       it 'should provide a null error', ->
         expect(err).to.be.null
@@ -632,7 +637,7 @@ describe 'RedisDocument', ->
         expect(err).to.be.null
 
       it 'should not provide an instance', ->
-        expect(instance).to.be.null  
+        expect(instance).to.be.null
 
 
     describe 'with invalid data', ->
@@ -698,7 +703,7 @@ describe 'RedisDocument', ->
         sinon.spy Document, 'index'
         sinon.stub(Document, 'get').callsArgWith(2, null, doc2)
         sinon.stub(Document, 'getByUnique')
-          .callsArgWith 1, null, doc1        
+          .callsArgWith 1, null, doc1
 
         Document.replace doc2._id, doc2, (error, result) ->
           err = error
@@ -794,7 +799,7 @@ describe 'RedisDocument', ->
         expect(err).to.be.null
 
       it 'should not provide an instance', ->
-        expect(instance).to.be.null  
+        expect(instance).to.be.null
 
 
     describe 'with invalid data', ->
@@ -868,14 +873,14 @@ describe 'RedisDocument', ->
         doc2 = documents[1]
         update = Document.initialize(documents[1]) # copy this doc
         update.unique = doc1.unique
-        
+
         sinon.spy multi, 'hset'
         sinon.spy multi, 'zadd'
         sinon.spy Document, 'index'
         sinon.stub(Document, 'get')
           .callsArgWith 2, null, doc2
         sinon.stub(Document, 'getByUnique')
-          .callsArgWith 1, null, doc1        
+          .callsArgWith 1, null, doc1
 
         Document.patch doc2._id, update, (error, result) ->
           err = error
@@ -952,7 +957,7 @@ describe 'RedisDocument', ->
         expect(err).to.be.null
 
       it 'should not provide an instance', ->
-        expect(instance).to.be.null  
+        expect(instance).to.be.null
 
 
     describe 'by array', ->
@@ -994,28 +999,33 @@ describe 'RedisDocument', ->
       instance = documents[0]
       sinon.spy multi, 'hset'
       sinon.spy multi, 'zadd'
+      sinon.spy multi, 'sadd'
       Document.index m, instance
 
     after ->
       multi.hset.restore()
       multi.zadd.restore()
+      multi.sadd.restore()
 
     it 'should index an object by unique values', ->
       multi.hset.should.have.been.calledWith 'documents:unique', instance.unique, instance._id
 
     it 'should index an object by descriptive values', ->
       multi.zadd.should.have.been.calledWith "documents:secondary:#{instance.secondary}", instance.created, instance._id
-    
+
     it 'should index an object by multiple values'
 
     it 'should index an object by creation time', ->
       multi.zadd.should.have.been.calledWith 'documents:created', instance.created, instance._id
-    
+
     it 'should index an object by modification time', ->
       multi.zadd.should.have.been.calledWith 'documents:modified', instance.modified, instance._id
-    
+
     it 'should index an object by reference', ->
       multi.zadd.should.have.been.calledWith "references:#{instance.reference}:documents", instance.created, instance._id
+
+    it 'should index an object by set', ->
+      multi.sadd.should.have.been.calledWith "whatever:#{instance._id}:youwant", instance.reference
 
 
 
@@ -1055,13 +1065,13 @@ describe 'RedisDocument', ->
 
     beforeEach ->
       sinon.spy multi, 'hset'
-      sinon.spy multi, 'zadd'    
+      sinon.spy multi, 'zadd'
       sinon.spy multi, 'hdel'
       sinon.spy multi, 'zrem'
 
     afterEach ->
       multi.hset.restore()
-      multi.zadd.restore()    
+      multi.zadd.restore()
       multi.hdel.restore()
       multi.zrem.restore()
 
@@ -1094,15 +1104,15 @@ describe 'RedisDocument', ->
 
       beforeEach ->
         m = client.multi()
-        
+
         instance =
           _id: 'id'
           secondary: 'updated'
           modified: '1235'
-        original = 
+        original =
           _id: 'id'
           secondary: 'original'
-          modified: '1234'          
+          modified: '1234'
 
         Document.reindex m, instance, original
 
@@ -1119,11 +1129,11 @@ describe 'RedisDocument', ->
 
       beforeEach ->
         m = client.multi()
-        
+
         instance =
           _id: 'id'
           secondary: 'updated'
-          modified: '1234'          
+          modified: '1234'
 
         Document.reindex m, instance, instance
 
@@ -1136,13 +1146,13 @@ describe 'RedisDocument', ->
 
       beforeEach ->
         m = client.multi()
-        
+
         instance =
           _id: 'id'
           modified: '1235'
-        original = 
+        original =
           _id: 'id'
-          modified: '1234'          
+          modified: '1234'
 
         Document.reindex m, instance, original
 
@@ -1154,10 +1164,10 @@ describe 'RedisDocument', ->
 
       beforeEach ->
         m = client.multi()
-        
+
         instance =
           _id: 'id'
-          modified: '1234'          
+          modified: '1234'
 
         Document.reindex m, instance, instance
 
@@ -1169,20 +1179,20 @@ describe 'RedisDocument', ->
 
       beforeEach ->
         m = client.multi()
-        
+
         instance =
           _id: 'id'
           reference: '1235'
           created: '3456'
-        original = 
+        original =
           _id: 'id'
-          reference: '1234'          
+          reference: '1234'
 
         Document.reindex m, instance, original
 
       it 'should index the object id by new reference', ->
         multi.zadd.should.have.been.calledWith "references:#{instance.reference}:documents", instance.created, instance._id
-      
+
       it 'should deindex the object id by old reference', ->
         multi.zrem.should.have.been.calledWith "references:#{original.reference}:documents", instance._id
 
@@ -1191,10 +1201,10 @@ describe 'RedisDocument', ->
 
       beforeEach ->
         m = client.multi()
-        
+
         instance =
           _id: 'id'
-          reference: '1235'       
+          reference: '1235'
 
         Document.reindex m, instance, instance
 
@@ -1269,7 +1279,7 @@ describe 'RedisDocument', ->
 
       it 'should provide a UniqueValueError', ->
         err.message.should.equal 'unique must be unique'
-  
+
 
 
 
@@ -1285,7 +1295,7 @@ describe 'RedisDocument', ->
 
       after ->
         rclient.zrevrange.restore()
-        rclient.hmget.restore()        
+        rclient.hmget.restore()
 
       it 'should provide a null error', ->
         expect(err).to.be.null
@@ -1307,14 +1317,14 @@ describe 'RedisDocument', ->
 
       after ->
         rclient.zrevrange.restore()
-        rclient.hmget.restore()        
+        rclient.hmget.restore()
 
       it 'should provide a null error', ->
         expect(err).to.be.null
 
       it 'should provide instances', ->
         instances.forEach (instance) ->
-          expect(instance).to.be.instanceof Document    
+          expect(instance).to.be.instanceof Document
 
 
   describe 'list newest', ->
@@ -1326,7 +1336,7 @@ describe 'RedisDocument', ->
        err = error
        instances = result
        done()
-       
+
     after ->
       rclient.zrevrange.restore()
       rclient.hmget.restore()
@@ -1356,7 +1366,7 @@ describe 'RedisDocument', ->
        err = error
        instances = result
        done()
-       
+
     after ->
       rclient.zrange.restore()
       rclient.hmget.restore()
@@ -1379,5 +1389,16 @@ describe 'RedisDocument', ->
 
   describe 'list in chronological order by modification time', ->
   describe 'list in reverse chronological order by modification time', ->
+
+
+
+
+  describe 'index value by set', ->
+
+    it 'should register an index', ->
+      config = {}
+      Document.indexSet config
+      Document.__indices.should.contain config
+
 
 

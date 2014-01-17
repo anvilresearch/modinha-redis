@@ -18,7 +18,7 @@
     "chai": "~1.8.1",
     "sinon": "~1.7.3",
     "sinon-chai": "~2.4.0",
-    "modinha": "0.0.18"
+    "modinha": "0.0.20"
   },
   "dependencies": {
     "async": "~0.2.9",
