@@ -1417,13 +1417,3 @@ describe 'RedisDocument', ->
 
 
 
-
-  describe 'index value by set', ->
-
-    it 'should register an index', ->
-      config = {}
-      Document.indexSet config
-      Document.__indices.should.contain config
-
-
-
