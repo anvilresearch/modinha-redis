@@ -50,12 +50,6 @@ describe 'Indexing', ->
     Document = Modinha.define 'documents', schema
     Document.extend RedisDocument
 
-    Document.indexSet
-      params: '_id'
-      key: 'whatever:$:youwant'
-      value: 'indexed'
-
-
 
     # lookup object by some 1:1 attribute
     Document.defineIndex
@@ -75,9 +69,8 @@ describe 'Indexing', ->
     Document.defineIndex
       type:   'sorted'
       key:    ['documents:#:$', 'secondary', 'secondary']
-      score:  'created'
+      score:  'modified'
       member: '_id'
-
 
 
     Document.__redis = redis
@@ -101,6 +94,30 @@ describe 'Indexing', ->
 
 
 
+  describe 'key interpolation', ->
+
+    it 'should replace # with literal parameters', ->
+      Document.indexKey(['a:#:b:#:c:#:d:#', '1', '2', '3', '4'])
+        .should.equal 'a:1:b:2:c:3:d:4'
+
+    it 'should replace $ with object values', ->
+      data = { a: 1, b: 2, c: '3', d: '4' }
+      Document.indexKey(['a:$:b:$:c:$:d:$', 'a', 'b', 'c', 'd'], data)
+        .should.equal 'a:1:b:2:c:3:d:4'
+
+    it 'should replace # and $ with the correct params', ->
+      data = { alpha: 1, bravo: 2, charlie: '3', delta: '4' }
+      Document.indexKey([
+        'a:#:b:$:c:#:d:$'
+        'alpha'
+        'bravo'
+        'charlie'
+        'delta'
+      ], data).should.equal 'a:alpha:b:2:c:charlie:d:4'
+
+
+
+
   describe 'index', ->
 
     before ->
@@ -114,247 +131,117 @@ describe 'Indexing', ->
       multi.hset.restore()
       multi.zadd.restore()
 
-    it 'should index an object by unique values', ->
+    it 'should add a field to a hash', ->
       multi.hset.should.have.been.calledWith 'documents:unique', instance.unique, instance._id
 
-    it 'should index an object by descriptive values', ->
+    it 'should add a member to a sorted set', ->
       multi.zadd.should.have.been.calledWith "documents:secondary:#{instance.secondary}", instance.created, instance._id
 
-    #it 'should index an object by multiple values'
 
-    #it 'should index an object by creation time', ->
-    #  multi.zadd.should.have.been.calledWith 'documents:created', instance.created, instance._id
 
-    #it 'should index an object by modification time', ->
-    #  multi.zadd.should.have.been.calledWith 'documents:modified', instance.modified, instance._id
 
-    #it 'should index an object by reference', ->
-    #  multi.zadd.should.have.been.calledWith "references:#{instance.reference}:documents", instance.created, instance._id
+  describe 'deindex', ->
 
-    #it 'should index an object by set', ->
-    #  multi.zadd.should.have.been.calledWith "whatever:#{instance._id}:youwant", instance.created, instance.indexed
+    before ->
+      m = client.multi()
+      instance = documents[0]
+      sinon.spy multi, 'hdel'
+      sinon.spy multi, 'zrem'
+      Document.deindex2 m, instance
 
+    after ->
+      multi.hdel.restore()
+      multi.zrem.restore()
 
+    it 'should remove a field from a hash', ->
+      multi.hdel.should.have.been.calledWith 'documents:unique', instance.unique
 
+    it 'should remove a member from a sorted set', ->
+      multi.zrem.should.have.been.calledWith "documents:secondary:#{instance.secondary}", instance._id
 
-  #describe 'deindex', ->
 
-  #  before ->
-  #    m = client.multi()
-  #    instance = documents[0]
-  #    sinon.spy multi, 'hdel'
-  #    sinon.spy multi, 'zrem'
-  #    Document.deindex m, instance
 
-  #  after ->
-  #    multi.hdel.restore()
-  #    multi.zrem.restore()
 
-  #  it 'should remove an object from unique index', ->
-  #    multi.hdel.should.have.been.calledWith 'documents:unique', instance.unique
+  describe 'reindex', ->
 
-  #  it 'should remove an object from secondary index', ->
-  #    multi.zrem.should.have.been.calledWith "documents:secondary:#{instance.secondary}", instance._id
+    beforeEach ->
+      sinon.spy multi, 'hset'
+      sinon.spy multi, 'zadd'
+      sinon.spy multi, 'hdel'
+      sinon.spy multi, 'zrem'
 
-  #  it 'should remove an object from created index', ->
-  #    multi.zrem.should.have.been.calledWith 'documents:created', instance._id
+    afterEach ->
+      multi.hset.restore()
+      multi.zadd.restore()
+      multi.hdel.restore()
+      multi.zrem.restore()
 
-  #  it 'should remove an object from modified index', ->
-  #    multi.zrem.should.have.been.calledWith 'documents:modified', instance._id
 
-  #  it 'should remove an object from a referenced object index', ->
-  #    multi.zrem.should.have.been.calledWith "references:#{instance.reference}:documents", instance._id
+    describe 'with changed value indexed by hash', ->
 
-  #  it 'should remove an object from a set index', ->
-  #    multi.zrem.should.have.been.calledWith "whatever:#{instance._id}:youwant", instance.indexed
+      beforeEach ->
+        m = client.multi()
+        Document.reindex2 m, { _id: 'id', unique: 'updated' }, { _id: 'id', unique: 'original' }
 
+      it 'should index the object by new value', ->
+        multi.hset.should.have.been.calledWith 'documents:unique', 'updated', 'id'
 
+      it 'should deindex the object by old value', ->
+        multi.hdel.should.have.been.calledWith 'documents:unique', 'original'
 
-  #describe 'reindex', ->
 
-  #  beforeEach ->
-  #    sinon.spy multi, 'hset'
-  #    sinon.spy multi, 'zadd'
-  #    sinon.spy multi, 'hdel'
-  #    sinon.spy multi, 'zrem'
+    describe 'with unchanged value indexed by hash', ->
 
-  #  afterEach ->
-  #    multi.hset.restore()
-  #    multi.zadd.restore()
-  #    multi.hdel.restore()
-  #    multi.zrem.restore()
+      beforeEach ->
+        m = client.multi()
+        Document.reindex2 m, { _id: 'id', unique: 'original' }, { _id: 'id', unique: 'original' }
 
+      it 'should not reindex', ->
+        multi.hset.should.not.have.been.called
+        multi.hdel.should.not.have.been.called
 
-  #  describe 'with changed unique value', ->
 
-  #    beforeEach ->
-  #      m = client.multi()
-  #      Document.reindex m, { _id: 'id', unique: 'updated' }, { _id: 'id', unique: 'original' }
+    describe 'with changed value indexed by sorted set', ->
 
-  #    it 'should index the object id by new value', ->
-  #      multi.hset.should.have.been.calledWith 'documents:unique', 'updated', 'id'
+      beforeEach ->
+        m = client.multi()
 
-  #    it 'should deindex the object id by old value', ->
-  #      multi.hdel.should.have.been.calledWith 'documents:unique', 'original'
+        instance =
+          _id: 'id'
+          secondary: 'updated'
+          modified: '1235'
+        original =
+          _id: 'id'
+          secondary: 'original'
+          modified: '1234'
 
+        Document.reindex2 m, instance, original
 
-  #  describe 'with unchanged unique value', ->
+      it 'should index the object by new value', ->
+        multi.zadd.should.have.been
+          .calledWith 'documents:secondary:updated', instance.modified, instance._id
 
-  #    beforeEach ->
-  #      m = client.multi()
-  #      Document.reindex m, { _id: 'id', unique: 'original' }, { _id: 'id', unique: 'original' }
+      it 'should deindex the object by old value', ->
+        multi.zrem.should.have.been
+          .calledWith 'documents:secondary:original', instance._id
 
-  #    it 'should not reindex the value', ->
-  #      multi.hset.should.not.have.been.called
-  #      multi.hdel.should.not.have.been.called
 
+    describe 'with unchanged value indexed by sorted set', ->
 
-  #  describe 'with changed secondary value', ->
+      beforeEach ->
+        m = client.multi()
 
-  #    beforeEach ->
-  #      m = client.multi()
+        instance =
+          _id: 'id'
+          secondary: 'updated'
+          modified: '1234'
 
-  #      instance =
-  #        _id: 'id'
-  #        secondary: 'updated'
-  #        modified: '1235'
-  #      original =
-  #        _id: 'id'
-  #        secondary: 'original'
-  #        modified: '1234'
+        Document.reindex2 m, instance, instance
 
-  #      Document.reindex m, instance, original
+      it 'should not reindex the value', ->
+        multi.zadd.should.not.have.been.called
+        multi.zrem.should.not.have.been.called
 
-  #    it 'should index the object id by new value', ->
-  #      multi.zadd.should.have.been
-  #        .calledWith 'documents:secondary:updated', instance.modified, instance._id
-
-  #    it 'should deindex the object id by old value', ->
-  #      multi.zrem.should.have.been
-  #        .calledWith 'documents:secondary:original', instance._id
-
-
-  #  describe 'with unchanged secondary value', ->
-
-  #    beforeEach ->
-  #      m = client.multi()
-
-  #      instance =
-  #        _id: 'id'
-  #        secondary: 'updated'
-  #        modified: '1234'
-
-  #      Document.reindex m, instance, instance
-
-  #    it 'should not reindex the value', ->
-  #      multi.zadd.should.not.have.been.called
-  #      multi.zrem.should.not.have.been.called
-
-
-  #  describe 'with changed ordered value', ->
-
-  #    beforeEach ->
-  #      m = client.multi()
-
-  #      instance =
-  #        _id: 'id'
-  #        modified: '1235'
-  #      original =
-  #        _id: 'id'
-  #        modified: '1234'
-
-  #      Document.reindex m, instance, original
-
-  #    it 'should reindex the object id with a new score', ->
-  #      multi.zadd.should.have.been.calledWith 'documents:modified', instance.modified, instance._id
-
-
-  #  describe 'with unchanged ordered value', ->
-
-  #    beforeEach ->
-  #      m = client.multi()
-
-  #      instance =
-  #        _id: 'id'
-  #        modified: '1234'
-
-  #      Document.reindex m, instance, instance
-
-  #    it 'should not reindex the object id with a new score', ->
-  #      multi.zadd.should.not.have.been.called
-
-
-  #  describe 'with changed reference value', ->
-
-  #    beforeEach ->
-  #      m = client.multi()
-
-  #      instance =
-  #        _id: 'id'
-  #        reference: '1235'
-  #        created: '3456'
-  #      original =
-  #        _id: 'id'
-  #        reference: '1234'
-
-  #      Document.reindex m, instance, original
-
-  #    it 'should index the object id by new reference', ->
-  #      multi.zadd.should.have.been.calledWith "references:#{instance.reference}:documents", instance.created, instance._id
-
-  #    it 'should deindex the object id by old reference', ->
-  #      multi.zrem.should.have.been.calledWith "references:#{original.reference}:documents", instance._id
-
-
-  #  describe 'with unchanged reference value', ->
-
-  #    beforeEach ->
-  #      m = client.multi()
-
-  #      instance =
-  #        _id: 'id'
-  #        reference: '1235'
-
-  #      Document.reindex m, instance, instance
-
-  #    it 'should not reindex the object id by reference', ->
-  #      multi.zadd.should.not.have.been.called
-  #      multi.zrem.should.not.have.been.called
-
-
-  #  describe 'set', ->
-
-  #    beforeEach ->
-  #      m = client.multi()
-
-  #      instance =
-  #        _id: 'id'
-  #        indexed: '1235'
-  #        created: '3456'
-  #      original =
-  #        _id: 'id'
-  #        indexed: '1234'
-
-  #      Document.reindex m, instance, original
-
-  #    it 'should remove old value', ->
-  #      multi.zrem.should.have.been.calledWith "whatever:#{instance._id}:youwant", original.indexed
-
-  #    it 'should add new value', ->
-  #      multi.zadd.should.have.been.calledWith "whatever:#{instance._id}:youwant", instance.created, instance.indexed
-
-
-
-
-
-
-
-  describe 'index value by set', ->
-
-    it 'should register an index', ->
-      config = {}
-      Document.indexSet config
-      Document.__indices.should.contain config
 
 
 
@@ -366,16 +253,5 @@ describe 'Indexing', ->
       Document.__indices.should.contain config
 
 
-  describe 'indexing by hash', ->
-
-    it 'should store a one to one reference', ->
-      Document.defineIndex
-        type: 'hash'
-        hash: 'documents:uniqueLookup'
-        key: 'unique'
-        value: '_id'
-
-
-  describe 'indexing by sorted set', ->
 
 
