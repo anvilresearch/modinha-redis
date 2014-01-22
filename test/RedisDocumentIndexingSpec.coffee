@@ -258,13 +258,24 @@ describe 'Indexing', ->
     it 'should register a unique index', ->
       Document.indexUnique('unique')
       index = Document.__indices[..].pop()
-      index.type.should.equal 'hash'
-      index.key.should.equal 'documents:unique'
+      index.type.should.equal  'hash'
+      index.key.should.equal   'documents:unique'
       index.field.should.equal 'unique'
       index.value.should.equal '_id'
 
 
   describe 'secondary index definition', ->
+
+    it 'should register a unique index', ->
+      Document.indexSecondary('secondary')
+      index = Document.__indices[..].pop()
+      index.type.should.equal   'sorted'
+      index.key[0].should.equal 'documents:#:$'
+      index.key[1].should.equal 'secondary'
+      index.key[2].should.equal 'secondary'
+      index.score.should.equal  'created'
+      index.member.should.equal '_id'
+
 
   describe 'reference index definition', ->
 
