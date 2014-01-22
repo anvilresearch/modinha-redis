@@ -287,3 +287,14 @@ describe 'Indexing', ->
       index.key[1].should.equal 'reference'
       index.score.should.equal  'created'
       index.member.should.equal '_id'
+
+
+  describe 'order index definition', ->
+
+    it 'should register an order index', ->
+      Document.indexOrder('created')
+      index = Document.__indices[..].pop()
+      index.type.should.equal   'sorted'
+      index.key[0].should.equal 'documents:created'
+      index.score.should.equal  'created'
+      index.member.should.equal '_id'
