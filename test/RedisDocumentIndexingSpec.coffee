@@ -266,7 +266,7 @@ describe 'Indexing', ->
 
   describe 'secondary index definition', ->
 
-    it 'should register a unique index', ->
+    it 'should register a secondary index', ->
       Document.indexSecondary('secondary')
       index = Document.__indices[..].pop()
       index.type.should.equal   'sorted'
@@ -279,3 +279,11 @@ describe 'Indexing', ->
 
   describe 'reference index definition', ->
 
+    it 'should register a reference index', ->
+      Document.indexReference('reference', { collection: 'references' })
+      index = Document.__indices[..].pop()
+      index.type.should.equal   'sorted'
+      index.key[0].should.equal 'references:$:documents'
+      index.key[1].should.equal 'reference'
+      index.score.should.equal  'created'
+      index.member.should.equal '_id'
