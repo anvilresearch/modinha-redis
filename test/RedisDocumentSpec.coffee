@@ -47,15 +47,11 @@ describe 'RedisDocument', ->
       secret:      { type: 'string', private:   true }
       secondary:   { type: 'string', secondary: true }
       reference:   { type: 'string', reference: { collection: 'references' } }
-      indexed:     { type: 'string' }
+
 
     Document = Modinha.define 'documents', schema
     Document.extend RedisDocument
 
-    Document.indexSet
-      params: '_id'
-      key: 'whatever:$:youwant'
-      value: 'indexed'
 
     Document.__redis = redis
     Document.__client = client
@@ -993,6 +989,47 @@ describe 'RedisDocument', ->
 
 
 
+  describe 'index definitions', ->
+
+    {indices} = {}
+
+    before ->
+      indices = Document.__indices
+
+    it 'should include the unique id by timestamps', ->
+      indices[3].type.should.equal 'sorted'
+      indices[3].key.should.contain 'documents:created'
+      indices[3].score.should.equal 'created'
+      indices[3].member.should.equal Document.uniqueId
+      indices[4].type.should.equal 'sorted'
+      indices[4].key.should.contain 'documents:modified'
+      indices[4].score.should.equal 'modified'
+      indices[4].member.should.equal Document.uniqueId
+
+    it 'should include "unique" schema properties', ->
+      indices[0].type.should.equal 'hash'
+      indices[0].key.should.equal 'documents:unique'
+      indices[0].field.should.equal 'unique'
+      indices[0].value.should.equal Document.uniqueId
+
+    it 'should include "secondary" schema properties', ->
+      indices[1].type.should.equal 'sorted'
+      indices[1].key[0].should.equal 'documents:#:$'
+      indices[1].key[1].should.equal 'secondary'
+      indices[1].key[2].should.equal 'secondary'
+      indices[1].score.should.equal 'modified'
+      indices[1].member.should.equal Document.uniqueId
+
+    it 'should include "reference" schema properties', ->
+      indices[2].type.should.equal 'sorted'
+      indices[2].key[0].should.equal 'references:$:documents'
+      indices[2].key[1].should.equal 'reference'
+      indices[2].score.should.equal 'created'
+      indices[2].member.should.equal Document.uniqueId
+
+    it 'should include "order" schema properties'
+
+
 
   describe 'index', ->
 
@@ -1024,9 +1061,6 @@ describe 'RedisDocument', ->
     it 'should index an object by reference', ->
       multi.zadd.should.have.been.calledWith "references:#{instance.reference}:documents", instance.created, instance._id
 
-    it 'should index an object by set', ->
-      multi.zadd.should.have.been.calledWith "whatever:#{instance._id}:youwant", instance.created, instance.indexed
-
 
 
 
@@ -1057,9 +1091,6 @@ describe 'RedisDocument', ->
 
     it 'should remove an object from a referenced object index', ->
       multi.zrem.should.have.been.calledWith "references:#{instance.reference}:documents", instance._id
-
-    it 'should remove an object from a set index', ->
-      multi.zrem.should.have.been.calledWith "whatever:#{instance._id}:youwant", instance.indexed
 
 
 
@@ -1213,29 +1244,6 @@ describe 'RedisDocument', ->
       it 'should not reindex the object id by reference', ->
         multi.zadd.should.not.have.been.called
         multi.zrem.should.not.have.been.called
-
-
-    describe 'set', ->
-
-      beforeEach ->
-        m = client.multi()
-
-        instance =
-          _id: 'id'
-          indexed: '1235'
-          created: '3456'
-        original =
-          _id: 'id'
-          indexed: '1234'
-
-        Document.reindex m, instance, original
-
-      it 'should remove old value', ->
-        multi.zrem.should.have.been.calledWith "whatever:#{instance._id}:youwant", original.indexed
-
-      it 'should add new value', ->
-        multi.zadd.should.have.been.calledWith "whatever:#{instance._id}:youwant", instance.created, instance.indexed
-
 
 
 

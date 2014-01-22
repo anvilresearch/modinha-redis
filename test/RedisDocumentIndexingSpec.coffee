@@ -125,7 +125,7 @@ describe 'Indexing', ->
       instance = documents[0]
       sinon.spy multi, 'hset'
       sinon.spy multi, 'zadd'
-      Document.index2 m, instance
+      Document.index m, instance
 
     after ->
       multi.hset.restore()
@@ -147,7 +147,7 @@ describe 'Indexing', ->
       instance = documents[0]
       sinon.spy multi, 'hdel'
       sinon.spy multi, 'zrem'
-      Document.deindex2 m, instance
+      Document.deindex m, instance
 
     after ->
       multi.hdel.restore()
@@ -181,7 +181,7 @@ describe 'Indexing', ->
 
       beforeEach ->
         m = client.multi()
-        Document.reindex2 m, { _id: 'id', unique: 'updated' }, { _id: 'id', unique: 'original' }
+        Document.reindex m, { _id: 'id', unique: 'updated' }, { _id: 'id', unique: 'original' }
 
       it 'should index the object by new value', ->
         multi.hset.should.have.been.calledWith 'documents:unique', 'updated', 'id'
@@ -194,7 +194,7 @@ describe 'Indexing', ->
 
       beforeEach ->
         m = client.multi()
-        Document.reindex2 m, { _id: 'id', unique: 'original' }, { _id: 'id', unique: 'original' }
+        Document.reindex m, { _id: 'id', unique: 'original' }, { _id: 'id', unique: 'original' }
 
       it 'should not reindex', ->
         multi.hset.should.not.have.been.called
@@ -215,7 +215,7 @@ describe 'Indexing', ->
           secondary: 'original'
           modified: '1234'
 
-        Document.reindex2 m, instance, original
+        Document.reindex m, instance, original
 
       it 'should index the object by new value', ->
         multi.zadd.should.have.been
@@ -236,7 +236,7 @@ describe 'Indexing', ->
           secondary: 'updated'
           modified: '1234'
 
-        Document.reindex2 m, instance, instance
+        Document.reindex m, instance, instance
 
       it 'should not reindex the value', ->
         multi.zadd.should.not.have.been.called
@@ -273,7 +273,7 @@ describe 'Indexing', ->
       index.key[0].should.equal 'documents:#:$'
       index.key[1].should.equal 'secondary'
       index.key[2].should.equal 'secondary'
-      index.score.should.equal  'created'
+      index.score.should.equal  'modified'
       index.member.should.equal '_id'
 
 
