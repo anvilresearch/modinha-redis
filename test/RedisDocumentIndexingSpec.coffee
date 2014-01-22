@@ -245,7 +245,7 @@ describe 'Indexing', ->
 
 
 
-  describe 'index definition', ->
+  describe 'explicit index definition', ->
 
     it 'should register an index', ->
       config = {}
@@ -253,5 +253,18 @@ describe 'Indexing', ->
       Document.__indices.should.contain config
 
 
+  describe 'unique index definition', ->
 
+    it 'should register a unique index', ->
+      Document.indexUnique('unique')
+      index = Document.__indices[..].pop()
+      index.type.should.equal 'hash'
+      index.key.should.equal 'documents:unique'
+      index.field.should.equal 'unique'
+      index.value.should.equal '_id'
+
+
+  describe 'secondary index definition', ->
+
+  describe 'reference index definition', ->
 
