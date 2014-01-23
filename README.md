@@ -1,4 +1,4 @@
-The RedisDocument mixin for [Modinha](https://github.com/christiansmith/Modinha) defines a collection of persistence methods that map cleanly between HTTP semantics and Redis data structures. 
+The RedisDocument mixin for [Modinha](https://github.com/christiansmith/Modinha) defines a collection of persistence methods that map cleanly between HTTP semantics and Redis data structures.
 
 ### Usage
 
@@ -47,9 +47,77 @@ Account.listByRole(role, callback)
 
 ### More about indexing
 
-Unique values are enforced by the `insert`, `replace`, and `patch` methods. If you write custom methods, you can use Account.enforceUnique(callback) to generate a UniqueValueError.
+We can index in a variety of ways with Redis hashes and sorted sets. For example, we could explicitly define our unique email index like so:
 
-The default timestamp methods define an ordered index for created and modified. Account.list(options, callback) uses the `accounts:created` index by default to deliver reverse chronological account listings.
+```javascript
+Account.defineIndex({
+  type:  'hash',
+  key:   'accounts:email',
+  field: 'email',
+  value: '_id'
+});
+```
 
-...
+This tells the model to store an account's `_id` property in a hash named `accounts:email` with email as the field name. Because this is a very common use of the hash type index, the mixin also provides a helper method for defining unique indices:
+
+```javascript
+Account.indexUnique('email');
+```
+
+This is equivalent to adding `unique: true` to the property definition in our schema.
+
+Sorted set indices get a little more interesting. We have a great deal of flexibility in how we can index our models. For example, suppose we have a `Video` model that has a `category` property and a `likes` property. We want to retrieve a list of videos for a specific category, sorted by the number of likes.
+
+```javascript
+Video.defineIndex({
+  type:   'sorted',
+  key:    ['videos:#:$', 'category', 'category'],
+  score:  'likes',
+  member: '_id'
+});
+```
+
+When we index the following instance...
+
+```javascript
+{
+  _id: 'r4nd0m',
+  name: 'Awesome Presentation',
+  url: 'https://youtube.com/wh4t3v3r'
+  category: 'conferences',
+  likes: 777
+}
+```
+
+... the object's `_id` will be added to a sorted set in Redis called `videos:category:conferences`, with a score of 777. Notice the `key` property of the index definition: `['videos:#:$', 'category', 'category']`. The first element of this array is a template for a key name. In the template, the placeholders `#` and `$` will be replaced in order according to the remaining elements of the array. `#` will be replaced literally with element and `$` will be used to access a property on the object being indexed.
+
+Like the hash-type index, there are a few very common indexing patterns for sorted sets. The mixin provides higher level methods for defining these, and in some cases, they can be created as part of a schema definition. Some examples:
+
+```javascript
+Model.indexSecondary(propertyName, [score]);
+Video.indexSecondary('category', 'likes');                     // Same as previous example
+
+
+Model.indexReference(propertyName, ReferencedModel, [score]);
+Comment.indexReference('videoId', Video);                      // multi.zadd('videos:ID:comments', comment.created, comment._id);
+
+
+Model.indexOrder(propertyName);
+Comment.indexOrder('likes');
+
+
+// video schema
+{
+  name:     { type: 'string', unique: true },
+  url:      { type: 'string', unique: true },
+  category: { type: 'string', enum: ['tutorial', 'presentation'], secondary: true },
+  likes:    { type: 'string', order: true }
+}
+```
+
+
+Unique values are enforced by the `insert`, `replace`, and `patch` methods. If you write custom methods, you can use `Account.enforceUnique(callback)` (for example) to generate a UniqueValueError.
+
+The default timestamp methods define an ordered index for created and modified. `Account.list(options, callback)` uses the `accounts:created` index by default to deliver reverse chronological account listings.
+
 
