@@ -202,6 +202,20 @@ describe 'Indexing', ->
         multi.hdel.should.have.been.calledWith 'documents:unique', 'original'
 
 
+    describe 'with change to hash index with dynamically named field', ->
+
+      beforeEach ->
+        m = client.multi()
+        Document.reindex m, { _id: 'id', reference: '345', secondary: '678' }, { _id: 'id', reference: '123', secondary: '456' }
+
+      it 'should index the modified version of the instance', ->
+        console.log(multi.hset)
+        multi.hset.should.have.been.calledWith 'a:b:c', '345:678', 'id'
+
+      it 'should deindex the original version of the instance', ->
+        multi.hdel.should.have.been.calledWith 'a:b:c', '123:456'
+
+
     describe 'with unchanged value indexed by hash', ->
 
       beforeEach ->
