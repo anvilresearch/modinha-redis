@@ -165,6 +165,9 @@ describe 'Indexing', ->
     it 'should remove a field from a hash', ->
       multi.hdel.should.have.been.calledWith 'documents:unique', instance.unique
 
+    it 'should remove a dynamically named field from a hash', ->
+      multi.hdel.should.have.been.calledWith 'a:b:c', "#{instance.reference}:#{instance.secondary}"
+
     it 'should remove a member from a sorted set', ->
       multi.zrem.should.have.been.calledWith "documents:secondary:#{instance.secondary}", instance._id
 
