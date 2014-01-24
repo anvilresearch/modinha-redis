@@ -72,6 +72,12 @@ describe 'Indexing', ->
       score:  'modified'
       member: '_id'
 
+    # compound field name
+    Document.defineIndex
+      type:  'hash'
+      key:   'a:b:c'
+      field: ['$:$', 'reference', 'secondary']
+      value: '_id'
 
     Document.__redis = redis
     Document.__client = client
@@ -133,6 +139,9 @@ describe 'Indexing', ->
 
     it 'should add a field to a hash', ->
       multi.hset.should.have.been.calledWith 'documents:unique', instance.unique, instance._id
+
+    it 'should add a dynamically named field to a hash', ->
+      multi.hset.should.have.been.calledWith 'a:b:c', "#{instance.reference}:#{instance.secondary}", instance._id
 
     it 'should add a member to a sorted set', ->
       multi.zadd.should.have.been.calledWith "documents:secondary:#{instance.secondary}", instance.created, instance._id
