@@ -73,58 +73,118 @@ describe 'Intersect', ->
 
   describe 'add', ->
 
-    before (done) ->
-      left = new LeftModel
-      right = new RightModel
+    describe 'with object args', ->
 
-      sinon.spy multi, 'zadd'
-      LeftModel.addRights left, right, done
+      before (done) ->
+        left = new LeftModel
+        right = new RightModel
 
-    after ->
-      multi.zadd.restore()
+        sinon.spy multi, 'zadd'
+        LeftModel.addRights left, right, done
 
-    it 'should index the left model by the right model', ->
-      multi.zadd.should.have.been.calledWith "rights:#{right._id}:lefts", left.created, left._id
+      after ->
+        multi.zadd.restore()
 
-    it 'should index the right model by the left model', ->
-      multi.zadd.should.have.been.calledWith "lefts:#{left._id}:rights", right.created, right._id
+      it 'should index the left model by the right model', ->
+        multi.zadd.should.have.been.calledWith "rights:#{right._id}:lefts", sinon.match.number, left._id
+
+      it 'should index the right model by the left model', ->
+        multi.zadd.should.have.been.calledWith "lefts:#{left._id}:rights", sinon.match.number, right._id
+
+
+    describe 'with id args', ->
+
+      before (done) ->
+        left = new LeftModel
+        right = new RightModel
+
+        sinon.spy multi, 'zadd'
+        LeftModel.addRights left._id, right._id, done
+
+      after ->
+        multi.zadd.restore()
+
+      it 'should index the left model by the right model', ->
+        multi.zadd.should.have.been.calledWith "rights:#{right._id}:lefts", left.created, left._id
+
+      it 'should index the right model by the left model', ->
+        multi.zadd.should.have.been.calledWith "lefts:#{left._id}:rights", right.created, right._id
 
 
 
 
   describe 'remove', ->
 
-    before (done) ->
-      left = new LeftModel
-      right = new RightModel
+    describe 'with object args', ->
 
-      sinon.spy multi, 'zrem'
-      LeftModel.removeRights left, right, done
+      before (done) ->
+        left = new LeftModel
+        right = new RightModel
 
-    after ->
-      multi.zrem.restore()
+        sinon.spy multi, 'zrem'
+        LeftModel.removeRights left, right, done
 
-    it 'should index the left model by the right model', ->
-      multi.zrem.should.have.been.calledWith "rights:#{right._id}:lefts", left._id
+      after ->
+        multi.zrem.restore()
 
-    it 'should index the right model by the left model', ->
-      multi.zrem.should.have.been.calledWith "lefts:#{left._id}:rights", right._id
+      it 'should index the left model by the right model', ->
+        multi.zrem.should.have.been.calledWith "rights:#{right._id}:lefts", left._id
+
+      it 'should index the right model by the left model', ->
+        multi.zrem.should.have.been.calledWith "lefts:#{left._id}:rights", right._id
+
+
+
+    describe 'with id args', ->
+
+      before (done) ->
+        left = new LeftModel
+        right = new RightModel
+
+        sinon.spy multi, 'zrem'
+        LeftModel.removeRights left._id, right._id, done
+
+      after ->
+        multi.zrem.restore()
+
+      it 'should index the left model by the right model', ->
+        multi.zrem.should.have.been.calledWith "rights:#{right._id}:lefts", left._id
+
+      it 'should index the right model by the left model', ->
+        multi.zrem.should.have.been.calledWith "lefts:#{left._id}:rights", right._id
 
 
 
 
   describe 'list', ->
 
-    before (done) ->
-      right = new RightModel
-      sinon.spy LeftModel, 'list'
-      LeftModel.listByRights right, done
+    describe 'with object arg', ->
 
-    after ->
-      LeftModel.list.restore()
+      before (done) ->
+        right = new RightModel
+        sinon.spy LeftModel, 'list'
+        LeftModel.listByRights right, done
 
-    it 'should look in the right index', ->
-      LeftModel.list.should.have.been.calledWith { index: "rights:#{right._id}:lefts" }
+      after ->
+        LeftModel.list.restore()
+
+      it 'should look in the right index', ->
+        LeftModel.list.should.have.been.calledWith { index: "rights:#{right._id}:lefts" }
+
+
+    describe 'with id arg', ->
+
+      before (done) ->
+        right = new RightModel
+        sinon.spy LeftModel, 'list'
+        LeftModel.listByRights right._id, done
+
+      after ->
+        LeftModel.list.restore()
+
+      it 'should look in the right index', ->
+        LeftModel.list.should.have.been.calledWith { index: "rights:#{right._id}:lefts" }
+
 
 
 
