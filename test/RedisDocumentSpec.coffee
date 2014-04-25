@@ -44,6 +44,7 @@ describe 'RedisDocument', ->
     schema =
       description: { type: 'string', required:  true }
       unique:      { type: 'string', unique:    true }
+      undefUnique: { type: 'string', unique:    true }
       secret:      { type: 'string', private:   true }
       secondary:   { type: 'string', secondary: true }
       reference:   { type: 'string', reference: { collection: 'references' } }
@@ -997,14 +998,14 @@ describe 'RedisDocument', ->
       indices = Document.__indices
 
     it 'should include the unique id by timestamps', ->
-      indices[3].type.should.equal 'sorted'
-      indices[3].key.should.contain 'documents:created'
-      indices[3].score.should.equal 'created'
-      indices[3].member.should.equal Document.uniqueId
       indices[4].type.should.equal 'sorted'
-      indices[4].key.should.contain 'documents:modified'
-      indices[4].score.should.equal 'modified'
+      indices[4].key.should.contain 'documents:created'
+      indices[4].score.should.equal 'created'
       indices[4].member.should.equal Document.uniqueId
+      indices[5].type.should.equal 'sorted'
+      indices[5].key.should.contain 'documents:modified'
+      indices[5].score.should.equal 'modified'
+      indices[5].member.should.equal Document.uniqueId
 
     it 'should include "unique" schema properties', ->
       indices[0].type.should.equal 'hash'
@@ -1013,19 +1014,19 @@ describe 'RedisDocument', ->
       indices[0].value.should.equal Document.uniqueId
 
     it 'should include "secondary" schema properties', ->
-      indices[1].type.should.equal 'sorted'
-      indices[1].key[0].should.equal 'documents:#:$'
-      indices[1].key[1].should.equal 'secondary'
-      indices[1].key[2].should.equal 'secondary'
-      indices[1].score.should.equal 'modified'
-      indices[1].member.should.equal Document.uniqueId
+      indices[2].type.should.equal 'sorted'
+      indices[2].key[0].should.equal 'documents:#:$'
+      indices[2].key[1].should.equal 'secondary'
+      indices[2].key[2].should.equal 'secondary'
+      indices[2].score.should.equal 'modified'
+      indices[2].member.should.equal Document.uniqueId
 
     it 'should include "reference" schema properties', ->
-      indices[2].type.should.equal 'sorted'
-      indices[2].key[0].should.equal 'references:$:documents'
-      indices[2].key[1].should.equal 'reference'
-      indices[2].score.should.equal 'created'
-      indices[2].member.should.equal Document.uniqueId
+      indices[3].type.should.equal 'sorted'
+      indices[3].key[0].should.equal 'references:$:documents'
+      indices[3].key[1].should.equal 'reference'
+      indices[3].score.should.equal 'created'
+      indices[3].member.should.equal Document.uniqueId
 
     it 'should include "order" schema properties'
 
@@ -1046,6 +1047,10 @@ describe 'RedisDocument', ->
 
     it 'should index an object by unique values', ->
       multi.hset.should.have.been.calledWith 'documents:unique', instance.unique, instance._id
+
+    it 'should not index an object by undefined unique values', ->
+      console.log('INSTANCE UNDEF UNIQUE', instance.undefUnique)
+      multi.hset.should.not.have.been.calledWith 'documents:undefUnique', instance.undefUnique, instance._id
 
     it 'should index an object by descriptive values', ->
       multi.zadd.should.have.been.calledWith "documents:secondary:#{instance.secondary}", instance.created, instance._id
