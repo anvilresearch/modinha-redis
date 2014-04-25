@@ -1,6 +1,6 @@
 {
   "name": "modinha-redis",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Redis persistence mixins for Modinha models",
   "main": "lib/RedisDocument.js",
   "scripts": {
