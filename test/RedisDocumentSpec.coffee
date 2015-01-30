@@ -1049,7 +1049,6 @@ describe 'RedisDocument', ->
       multi.hset.should.have.been.calledWith 'documents:unique', instance.unique, instance._id
 
     it 'should not index an object by undefined unique values', ->
-      console.log('INSTANCE UNDEF UNIQUE', instance.undefUnique)
       multi.hset.should.not.have.been.calledWith 'documents:undefUnique', instance.undefUnique, instance._id
 
     it 'should index an object by descriptive values', ->

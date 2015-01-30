@@ -45,6 +45,8 @@ describe 'Indexing', ->
       unique:    { type: 'string' }
       reference: { type: 'string' }
       secondary: { type: 'string' }
+      nested:    { type: 'object' }
+      flag:      { type: 'string' }
 
 
     Document = Modinha.define 'documents', schema
@@ -79,6 +81,20 @@ describe 'Indexing', ->
       field: ['$:$', 'reference', 'secondary']
       value: '_id'
 
+    # nested property
+    Document.defineIndex
+      type:  'hash'
+      key:   ['documents:$', 'nested.key']
+      field: ['$', 'nested.prop']
+      value: '_id'
+
+    # dynamic nested property
+    Document.defineIndex
+      type:  'hash'
+      key:   'dynamic:field'
+      field: ['$', ['nested.$', 'flag']]
+      value: '_id'
+
     Document.__redis = redis
     Document.__client = client
 
@@ -90,6 +106,12 @@ describe 'Indexing', ->
         unique:    Faker.random.number(1000).toString()
         reference: Faker.random.number(1000).toString()
         secondary: Faker.random.number(1000).toString()
+        nested:
+          key:  'value'
+          prop: Faker.random.number(1000).toString()
+          foo:  'bar'
+        flag: 'foo'
+
 
     documents = Document.initialize(data, { private: true })
     jsonDocuments = documents.map (d) ->
@@ -121,6 +143,13 @@ describe 'Indexing', ->
         'delta'
       ], data).should.equal 'a:alpha:b:2:c:charlie:d:4'
 
+    it 'should evaluate array params', ->
+      data = { a: 1, b: { c: 'd', d: { e: 5 } } }
+      Document.indexKey([
+        'answer:$'
+        ['b.$.e', 'b.c']
+      ], data).should.equal 'answer:5'
+
 
 
 
@@ -142,6 +171,12 @@ describe 'Indexing', ->
 
     it 'should add a dynamically named field to a hash', ->
       multi.hset.should.have.been.calledWith 'a:b:c', "#{instance.reference}:#{instance.secondary}", instance._id
+
+    it 'should add a "nested property" field to a hash', ->
+      multi.hset.should.have.been.calledWith 'documents:value', instance.nested.prop, instance._id
+
+    it 'should add a "dynamic property" field to a hash', ->
+      multi.hset.should.have.been.calledWith 'dynamic:field', 'bar', instance._id
 
     it 'should add a member to a sorted set', ->
       multi.zadd.should.have.been.calledWith "documents:secondary:#{instance.secondary}", instance.created, instance._id
@@ -167,6 +202,12 @@ describe 'Indexing', ->
 
     it 'should remove a dynamically named field from a hash', ->
       multi.hdel.should.have.been.calledWith 'a:b:c', "#{instance.reference}:#{instance.secondary}"
+
+    it 'should remove a "nested property" field from a hash', ->
+      multi.hdel.should.have.been.calledWith 'documents:value', instance.nested.prop
+
+    it 'should remove a "dynamic property" field from a hash', ->
+      multi.hdel.should.have.been.calledWith 'dynamic:field', 'bar'
 
     it 'should remove a member from a sorted set', ->
       multi.zrem.should.have.been.calledWith "documents:secondary:#{instance.secondary}", instance._id
@@ -209,7 +250,6 @@ describe 'Indexing', ->
         Document.reindex m, { _id: 'id', reference: '345', secondary: '678' }, { _id: 'id', reference: '123', secondary: '456' }
 
       it 'should index the modified version of the instance', ->
-        console.log(multi.hset)
         multi.hset.should.have.been.calledWith 'a:b:c', '345:678', 'id'
 
       it 'should deindex the original version of the instance', ->
