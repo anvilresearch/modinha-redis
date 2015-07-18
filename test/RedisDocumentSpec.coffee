@@ -1,7 +1,7 @@
 # Test dependencies
 cwd       = process.cwd()
 path      = require 'path'
-Faker     = require 'Faker'
+faker     = require 'faker'
 chai      = require 'chai'
 sinon     = require 'sinon'
 sinonChai = require 'sinon-chai'
@@ -62,11 +62,11 @@ describe 'RedisDocument', ->
 
     for i in [0..9]
       data.push
-        description: Faker.Lorem.words(5).join(' ')
-        unique: Faker.random.number(1000).toString()
-        secondary: Faker.random.number(1000).toString()
-        reference: Faker.random.number(1000).toString()
-        indexed: Faker.random.number(1000).toString()
+        description: faker.lorem.words(5).join(' ')
+        unique: faker.random.number(1000).toString()
+        secondary: faker.random.number(1000).toString()
+        reference: faker.random.number(1000).toString()
+        indexed: faker.random.number(1000).toString()
         secret: 'nobody knows'
 
     documents = Document.initialize(data, { private: true })
