@@ -26,9 +26,12 @@ RedisDocument = require path.join(cwd, 'lib/RedisDocument')
 
 # Redis lib for spying and stubbing
 redis   = require 'redis'
-client  = redis.createClient()
 multi   = redis.Multi.prototype
 rclient = redis.RedisClient.prototype
+rclient.ready_check = ->
+rclient.install_stream_listeners = ->
+rclient.connection_gone = ->
+client  = new redis.RedisClient({}, {})
 
 
 
