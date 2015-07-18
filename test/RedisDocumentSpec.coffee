@@ -92,12 +92,13 @@ describe 'RedisDocument', ->
 
 
 
+
   describe 'list', ->
 
     describe 'by default', ->
 
       before (done) ->
-        sinon.spy rclient, 'zrevrange'
+        sinon.stub(rclient, 'zrevrange').callsArgWith 3, null, ids
         sinon.stub(rclient, 'hmget').callsArgWith 2, null, jsonDocuments
         Document.list (error, results) ->
           err = error
@@ -160,7 +161,7 @@ describe 'RedisDocument', ->
     describe 'with paging', ->
 
       before (done) ->
-        sinon.spy rclient, 'zrevrange'
+        sinon.stub(rclient, 'zrevrange').callsArgWith 3, null, ids
         sinon.stub(rclient, 'hmget').callsArgWith 2, null, jsonDocuments
         Document.list { page: 2, size: 3 }, (error, results) ->
           err = error
@@ -206,7 +207,7 @@ describe 'RedisDocument', ->
     describe 'with selection', ->
 
       before (done) ->
-        sinon.spy rclient, 'zrevrange'
+        sinon.stub(rclient, 'zrevrange').callsArgWith 3, null, ids
         sinon.stub(rclient, 'hmget').callsArgWith 2, null, jsonDocuments
         Document.list { select: [ 'description', 'secret' ] }, (error, results) ->
           err = error
@@ -238,7 +239,7 @@ describe 'RedisDocument', ->
     describe 'with private option', ->
 
       before (done) ->
-        sinon.spy rclient, 'zrevrange'
+        sinon.stub(rclient, 'zrevrange').callsArgWith 3, null, ids
         sinon.stub(rclient, 'hmget').callsArgWith 2, null, jsonDocuments
         Document.list { private: true }, (error, results) ->
           err = error
@@ -265,7 +266,7 @@ describe 'RedisDocument', ->
     describe 'in chronological order', ->
 
       before (done) ->
-        sinon.spy rclient, 'zrange'
+        sinon.stub(rclient, 'zrange').callsArgWith 3, null, ids
         sinon.stub(rclient, 'hmget').callsArgWith 2, null, jsonDocuments
         Document.list { order: 'normal' }, (error, results) ->
           err = error
@@ -326,10 +327,16 @@ describe 'RedisDocument', ->
     describe 'by string not found', ->
 
       before (done) ->
+        sinon.stub rclient, 'hmget', (collection, ids, cb) ->
+          if cb
+            cb null, []
         Document.get 'unknown', (error, result) ->
           err = error
           instance = result
           done()
+
+      after ->
+        rclient.hmget.restore()
 
       it 'should provide null error', ->
         expect(err).to.be.null
@@ -450,10 +457,11 @@ describe 'RedisDocument', ->
     describe 'with valid data', ->
 
       beforeEach (done) ->
-        sinon.spy multi, 'hset'
-        sinon.spy multi, 'zadd'
+        sinon.stub multi, 'hset'
+        sinon.stub multi, 'zadd'
+        sinon.stub(multi, 'exec').callsArgWith 0, null, []
         sinon.spy Document, 'index'
-        sinon.stub(Document, 'enforceUnique').callsArgWith(1, null)
+        sinon.stub(Document, 'enforceUnique').callsArgWith 1, null
 
         Document.insert data[0], (error, result) ->
           err = error
@@ -463,6 +471,7 @@ describe 'RedisDocument', ->
       afterEach ->
         multi.hset.restore()
         multi.zadd.restore()
+        multi.exec.restore()
         Document.index.restore()
         Document.enforceUnique.restore()
 
@@ -485,8 +494,9 @@ describe 'RedisDocument', ->
     describe 'with invalid data', ->
 
       before (done) ->
-        sinon.spy multi, 'hset'
-        sinon.spy multi, 'zadd'
+        sinon.stub multi, 'hset'
+        sinon.stub multi, 'zadd'
+        sinon.stub(multi, 'exec').callsArgWith 0, null, []
         sinon.spy Document, 'index'
 
         Document.insert {}, (error, result) ->
@@ -497,6 +507,7 @@ describe 'RedisDocument', ->
       after ->
         multi.hset.restore()
         multi.zadd.restore()
+        multi.exec.restore()
         Document.index.restore()
 
       it 'should provide a validation error', ->
@@ -515,10 +526,11 @@ describe 'RedisDocument', ->
     describe 'with private values option', ->
 
       beforeEach (done) ->
-        sinon.spy multi, 'hset'
-        sinon.spy multi, 'zadd'
+        sinon.stub multi, 'hset'
+        sinon.stub multi, 'zadd'
+        sinon.stub(multi, 'exec').callsArgWith 0, null, []
         sinon.spy Document, 'index'
-        sinon.stub(Document, 'enforceUnique').callsArgWith(1, null)
+        sinon.stub(Document, 'enforceUnique').callsArgWith 1, null
 
         Document.insert data[0], { private: true }, (error, result) ->
           err = error
@@ -528,6 +540,7 @@ describe 'RedisDocument', ->
       afterEach ->
         multi.hset.restore()
         multi.zadd.restore()
+        multi.exec.restore()
         Document.index.restore()
         Document.enforceUnique.restore()
 
@@ -544,8 +557,9 @@ describe 'RedisDocument', ->
     describe 'with duplicate unique values', ->
 
       beforeEach (done) ->
-        sinon.spy multi, 'hset'
-        sinon.spy multi, 'zadd'
+        sinon.stub multi, 'hset'
+        sinon.stub multi, 'zadd'
+        sinon.stub(multi, 'exec').callsArgWith 0, null, []
         sinon.spy Document, 'index'
         sinon.stub(Document, 'getByUnique')
           .callsArgWith 1, null, documents[0]
@@ -558,6 +572,7 @@ describe 'RedisDocument', ->
       afterEach ->
         multi.hset.restore()
         multi.zadd.restore()
+        multi.exec.restore()
         Document.index.restore()
         Document.getByUnique.restore()
 
@@ -576,6 +591,7 @@ describe 'RedisDocument', ->
 
 
 
+
   describe 'replace', ->
 
     describe 'with valid data', ->
@@ -587,9 +603,11 @@ describe 'RedisDocument', ->
           description: 'updated'
 
         sinon.stub(Document, 'get').callsArgWith(2, null, doc)
-        sinon.spy Document, 'reindex'
-        sinon.spy multi, 'hset'
-        sinon.spy multi, 'zadd'
+        sinon.stub(Document, 'enforceUnique').callsArgWith(1, null)
+        sinon.stub Document, 'reindex'
+        sinon.stub multi, 'hset'
+        sinon.stub multi, 'zadd'
+        sinon.stub(multi, 'exec').callsArgWith 0, null, []
 
         Document.replace doc._id, update, (error, result) ->
           err = error
@@ -598,9 +616,11 @@ describe 'RedisDocument', ->
 
       after ->
         Document.get.restore()
+        Document.enforceUnique.restore()
         Document.reindex.restore()
         multi.hset.restore()
         multi.zadd.restore()
+        multi.exec.restore()
 
       it 'should provide a null error', ->
         expect(err).to.be.null
@@ -643,11 +663,16 @@ describe 'RedisDocument', ->
 
       before (done) ->
         doc = documents[0]
+        sinon.stub(Document, 'get').callsArgWith(2, null, doc)
+
 
         Document.replace doc._id, { description: -1 }, (error, result) ->
           err = error
           instance = result
           done()
+
+      after ->
+        Document.get.restore()
 
       it 'should provide a validation error', ->
         expect(err).to.be.instanceof Modinha.ValidationError
@@ -662,10 +687,13 @@ describe 'RedisDocument', ->
         doc = documents[0]
         json = jsonDocuments[0]
 
+        sinon.stub(Document, 'get').callsArgWith(2, null, doc)
+        sinon.stub(Document, 'enforceUnique').callsArgWith(1, null)
         sinon.stub(rclient, 'hmget').callsArgWith(2, null, [json])
         sinon.spy Document, 'reindex'
-        sinon.spy multi, 'hset'
-        sinon.spy multi, 'zadd'
+        sinon.stub multi, 'hset'
+        sinon.stub multi, 'zadd'
+        sinon.stub(multi, 'exec').callsArgWith 0, null, []
 
         update =
           _id: doc._id
@@ -679,9 +707,12 @@ describe 'RedisDocument', ->
 
       after ->
         rclient.hmget.restore()
+        Document.get.restore()
+        Document.enforceUnique.restore()
         Document.reindex.restore()
         multi.hset.restore()
         multi.zadd.restore()
+        multi.exec.restore()
 
       it 'should provide a null error', ->
         expect(err).to.be.null
@@ -703,6 +734,7 @@ describe 'RedisDocument', ->
         sinon.stub(Document, 'get').callsArgWith(2, null, doc2)
         sinon.stub(Document, 'getByUnique')
           .callsArgWith 1, null, doc1
+        sinon.stub(multi, 'exec').callsArgWith 0, null, []
 
         Document.replace doc2._id, doc2, (error, result) ->
           err = error
@@ -713,6 +745,7 @@ describe 'RedisDocument', ->
         Document.get.restore()
         Document.index.restore()
         Document.getByUnique.restore()
+        multi.exec.restore()
 
       it 'should provide a unique value error', ->
         expect(err).to.be.instanceof Document.UniqueValueError
@@ -740,8 +773,10 @@ describe 'RedisDocument', ->
 
         sinon.stub(rclient, 'hmget').callsArgWith(2, null, [json])
         sinon.spy Document, 'reindex'
-        sinon.spy multi, 'hset'
-        sinon.spy multi, 'zadd'
+        sinon.stub(Document, 'enforceUnique').callsArgWith(1, null)
+        sinon.stub multi, 'hset'
+        sinon.stub multi, 'zadd'
+        sinon.stub(multi, 'exec').callsArgWith 0, null, []
 
         update =
           _id: doc._id
@@ -756,8 +791,10 @@ describe 'RedisDocument', ->
       after ->
         rclient.hmget.restore()
         Document.reindex.restore()
+        Document.enforceUnique.restore()
         multi.hset.restore()
         multi.zadd.restore()
+        multi.exec.restore()
 
       it 'should provide a null error', ->
         expect(err).to.be.null
@@ -833,11 +870,14 @@ describe 'RedisDocument', ->
       before (done) ->
         doc = documents[0]
         json = jsonDocuments[0]
-
+        sinon.stub(Document, 'enforceUnique').callsArgWith(1, null)
         sinon.stub(rclient, 'hmget').callsArgWith(2, null, [json])
         sinon.spy Document, 'reindex'
-        sinon.spy multi, 'hset'
-        sinon.spy multi, 'zadd'
+
+
+        sinon.stub multi, 'hset'
+        sinon.stub multi, 'zadd'
+        sinon.stub(multi, 'exec').callsArgWith(0, null, [])
 
         update =
           _id: doc._id
@@ -854,6 +894,8 @@ describe 'RedisDocument', ->
         Document.reindex.restore()
         multi.hset.restore()
         multi.zadd.restore()
+        multi.exec.restore()
+        Document.enforceUnique.restore()
 
       it 'should provide a null error', ->
         expect(err).to.be.null
@@ -915,7 +957,9 @@ describe 'RedisDocument', ->
       before (done) ->
         instance = documents[0]
         sinon.spy Document, 'deindex'
+        sinon.stub(Document, 'enforceUnique').callsArgWith(1, null)
         sinon.spy multi, 'hdel'
+        sinon.stub(multi, 'exec').callsArgWith(0, null, [])
         sinon.stub(Document, 'get').callsArgWith(2, null, instance)
         Document.delete instance._id, (error, result) ->
           err = error
@@ -924,8 +968,10 @@ describe 'RedisDocument', ->
 
       after ->
         Document.deindex.restore()
+        Document.enforceUnique.restore()
         Document.get.restore()
         multi.hdel.restore()
+        multi.exec.restore()
 
       it 'should provide a null error', ->
         expect(err).to.be.null
@@ -964,6 +1010,7 @@ describe 'RedisDocument', ->
       beforeEach (done) ->
         sinon.spy Document, 'deindex'
         sinon.spy multi, 'hdel'
+        sinon.stub(multi, 'exec').callsArgWith(0, null, [])
         sinon.stub(Document, 'get').callsArgWith(2, null, documents)
         Document.delete ids, (error, result) ->
           err = error
@@ -974,6 +1021,7 @@ describe 'RedisDocument', ->
         Document.deindex.restore()
         Document.get.restore()
         multi.hdel.restore()
+        multi.exec.restore()
 
       it 'should provide a null error', ->
         expect(err).to.be.null
@@ -1289,12 +1337,14 @@ describe 'RedisDocument', ->
 
       before (done) ->
         sinon.stub(Document, 'getByUnique').callsArgWith 1, null, null
+        sinon.stub(Document, 'getByUndefUnique').callsArgWith 1, null, null
         Document.enforceUnique documents[0], (error) ->
           err = error
           done()
 
       after ->
         Document.getByUnique.restore()
+        Document.getByUndefUnique.restore()
 
       it 'should provide a null error', ->
         expect(err).to.be.null
