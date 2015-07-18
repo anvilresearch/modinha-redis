@@ -158,13 +158,15 @@ describe 'Indexing', ->
     before ->
       m = client.multi()
       instance = documents[0]
-      sinon.spy multi, 'hset'
-      sinon.spy multi, 'zadd'
+      sinon.stub multi, 'hset'
+      sinon.stub multi, 'zadd'
+      sinon.stub(multi, 'exec').callsArgWith(0, null, [])
       Document.index m, instance
 
     after ->
       multi.hset.restore()
       multi.zadd.restore()
+      multi.exec.restore()
 
     it 'should add a field to a hash', ->
       multi.hset.should.have.been.calledWith 'documents:unique', instance.unique, instance._id
@@ -179,7 +181,7 @@ describe 'Indexing', ->
       multi.hset.should.have.been.calledWith 'dynamic:field', 'bar', instance._id
 
     it 'should add a member to a sorted set', ->
-      multi.zadd.should.have.been.calledWith "documents:secondary:#{instance.secondary}", instance.created, instance._id
+      multi.zadd.should.have.been.calledWith "documents:secondary:#{instance.secondary}", sinon.match.number, instance._id
 
 
 
@@ -189,13 +191,15 @@ describe 'Indexing', ->
     before ->
       m = client.multi()
       instance = documents[0]
-      sinon.spy multi, 'hdel'
-      sinon.spy multi, 'zrem'
+      sinon.stub multi, 'hdel'
+      sinon.stub multi, 'zrem'
+      sinon.stub(multi, 'exec').callsArgWith(0, null, [])
       Document.deindex m, instance
 
     after ->
       multi.hdel.restore()
       multi.zrem.restore()
+      multi.exec.restore()
 
     it 'should remove a field from a hash', ->
       multi.hdel.should.have.been.calledWith 'documents:unique', instance.unique
@@ -218,16 +222,18 @@ describe 'Indexing', ->
   describe 'reindex', ->
 
     beforeEach ->
-      sinon.spy multi, 'hset'
-      sinon.spy multi, 'zadd'
-      sinon.spy multi, 'hdel'
-      sinon.spy multi, 'zrem'
+      sinon.stub multi, 'hset'
+      sinon.stub multi, 'zadd'
+      sinon.stub multi, 'hdel'
+      sinon.stub multi, 'zrem'
+      sinon.stub(multi, 'exec').callsArgWith(0, null, [])
 
     afterEach ->
       multi.hset.restore()
       multi.zadd.restore()
       multi.hdel.restore()
       multi.zrem.restore()
+      multi.exec.restore()
 
 
     describe 'with changed value indexed by hash', ->

@@ -79,11 +79,15 @@ describe 'Intersect', ->
         left = new LeftModel
         right = new RightModel
 
-        sinon.spy multi, 'zadd'
+        sinon.stub multi, 'zadd'
+        sinon.stub(multi, 'exec').callsArgWith 0, null, []
+
+        #sinon.spy multi, 'zadd'
         LeftModel.addRights left, right, done
 
       after ->
         multi.zadd.restore()
+        multi.exec.restore()
 
       it 'should index the left model by the right model', ->
         multi.zadd.should.have.been.calledWith "rights:#{right._id}:lefts", sinon.match.number, left._id
@@ -98,17 +102,20 @@ describe 'Intersect', ->
         left = new LeftModel
         right = new RightModel
 
-        sinon.spy multi, 'zadd'
+        sinon.stub multi, 'zadd'
+        sinon.stub(multi, 'exec').callsArgWith 0, null, []
+
         LeftModel.addRights left._id, right._id, done
 
       after ->
         multi.zadd.restore()
+        multi.exec.restore()
 
       it 'should index the left model by the right model', ->
-        multi.zadd.should.have.been.calledWith "rights:#{right._id}:lefts", left.created, left._id
+        multi.zadd.should.have.been.calledWith "rights:#{right._id}:lefts", sinon.match.number, left._id
 
       it 'should index the right model by the left model', ->
-        multi.zadd.should.have.been.calledWith "lefts:#{left._id}:rights", right.created, right._id
+        multi.zadd.should.have.been.calledWith "lefts:#{left._id}:rights", sinon.match.number, right._id
 
 
 
@@ -121,11 +128,13 @@ describe 'Intersect', ->
         left = new LeftModel
         right = new RightModel
 
-        sinon.spy multi, 'zrem'
+        sinon.stub multi, 'zrem'
+        sinon.stub(multi, 'exec').callsArgWith 0, null, []
         LeftModel.removeRights left, right, done
 
       after ->
         multi.zrem.restore()
+        multi.exec.restore()
 
       it 'should index the left model by the right model', ->
         multi.zrem.should.have.been.calledWith "rights:#{right._id}:lefts", left._id
@@ -141,11 +150,13 @@ describe 'Intersect', ->
         left = new LeftModel
         right = new RightModel
 
-        sinon.spy multi, 'zrem'
-        LeftModel.removeRights left._id, right._id, done
+        sinon.stub multi, 'zrem'
+        sinon.stub(multi, 'exec').callsArgWith 0, null, []
+        LeftModel.removeRights left, right, done
 
       after ->
         multi.zrem.restore()
+        multi.exec.restore()
 
       it 'should index the left model by the right model', ->
         multi.zrem.should.have.been.calledWith "rights:#{right._id}:lefts", left._id
@@ -163,9 +174,13 @@ describe 'Intersect', ->
       before (done) ->
         right = new RightModel
         sinon.spy LeftModel, 'list'
+        sinon.stub(rclient, 'zrange').callsArgWith 3, null, []
+        sinon.stub(rclient, 'zrevrange').callsArgWith 3, null, []
         LeftModel.listByRights right, done
 
       after ->
+        rclient.zrange.restore()
+        rclient.zrevrange.restore()
         LeftModel.list.restore()
 
       it 'should look in the right index', ->
@@ -176,10 +191,14 @@ describe 'Intersect', ->
 
       before (done) ->
         right = new RightModel
+        sinon.stub(rclient, 'zrange').callsArgWith 3, null, []
+        sinon.stub(rclient, 'zrevrange').callsArgWith 3, null, []
         sinon.spy LeftModel, 'list'
         LeftModel.listByRights right._id, done
 
       after ->
+        rclient.zrange.restore()
+        rclient.zrevrange.restore()
         LeftModel.list.restore()
 
       it 'should look in the right index', ->
