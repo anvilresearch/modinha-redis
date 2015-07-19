@@ -46,6 +46,7 @@ describe 'RedisDocument', ->
   before ->
     schema =
       description: { type: 'string', required:  true }
+      deleted:     { type: 'string' }
       unique:      { type: 'string', unique:    true }
       undefUnique: { type: 'string', unique:    true }
       secret:      { type: 'string', private:   true }
@@ -66,6 +67,7 @@ describe 'RedisDocument', ->
     for i in [0..9]
       data.push
         description: faker.lorem.words(5).join(' ')
+        deleted: 'not deleted'
         unique: faker.random.number(1000).toString()
         secondary: faker.random.number(1000).toString()
         reference: faker.random.number(1000).toString()
@@ -776,6 +778,7 @@ describe 'RedisDocument', ->
 
         sinon.stub(rclient, 'hmget').callsArgWith(2, null, [json])
         sinon.spy Document, 'reindex'
+        sinon.spy Document, 'serialize'
         sinon.stub(Document, 'enforceUnique').callsArgWith(1, null)
         sinon.stub multi, 'hset'
         sinon.stub multi, 'zadd'
@@ -785,8 +788,11 @@ describe 'RedisDocument', ->
           _id: doc._id
           description: 'updated'
 
+        options =
+          $unset: [ 'deleted' ]
 
-        Document.patch doc._id, update, (error, result) ->
+
+        Document.patch doc._id, update, options, (error, result) ->
           err = error
           instance = result
           done()
@@ -804,6 +810,10 @@ describe 'RedisDocument', ->
 
       it 'should provide the patched instance', ->
         expect(instance).to.be.instanceof Document
+
+      it 'should delete unset properties', ->
+        instance.should.not.have.property 'deleted'
+        Document.serialize.args[0][0].should.not.have.property 'deleted'
 
       it 'should not provide private properties', ->
         expect(instance.secret).to.be.undefined
@@ -1369,6 +1379,28 @@ describe 'RedisDocument', ->
 
       it 'should provide a UniqueValueError', ->
         err.message.should.equal 'unique must be unique'
+
+
+    describe 'with undefined values', ->
+
+      before (done) ->
+        doc1 = Document.initialize(documents[0])
+        doc2 = Document.initialize(documents[1])
+        delete doc1.unique
+        delete doc2.unique
+        sinon.stub(Document, 'getByUnique').callsArgWith 1, null, null
+        Document.enforceUnique doc2, (error) ->
+          err = error
+          done()
+
+      after ->
+        Document.getByUnique.restore()
+
+      it 'should provide a null error', ->
+        expect(err).to.be.null
+
+      it 'should not call getByUnique', ->
+        Document.getByUnique.should.not.have.been.called
 
 
 
