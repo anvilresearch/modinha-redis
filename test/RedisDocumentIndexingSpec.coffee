@@ -43,6 +43,7 @@ describe 'Indexing', ->
   before ->
     schema =
       unique:    { type: 'string' }
+      deleted:   { type: 'string', unique: true }
       reference: { type: 'string' }
       secondary: { type: 'string' }
       nested:    { type: 'object' }
@@ -240,13 +241,17 @@ describe 'Indexing', ->
 
       beforeEach ->
         m = client.multi()
-        Document.reindex m, { _id: 'id', unique: 'updated' }, { _id: 'id', unique: 'original' }
+        Document.reindex m, { _id: 'id', unique: 'updated' }, { _id: 'id', unique: 'original', deleted: 'not deleted' }
 
       it 'should index the object by new value', ->
         multi.hset.should.have.been.calledWith 'documents:unique', 'updated', 'id'
 
       it 'should deindex the object by old value', ->
         multi.hdel.should.have.been.calledWith 'documents:unique', 'original'
+
+      it 'should deindex the object by a deleted property', ->
+        multi.hdel.should.have.been.calledWith 'documents:deleted', 'not deleted'
+        multi.hset.should.not.have.been.calledWith 'documents:deleted'
 
 
     describe 'with change to hash index with dynamically named field', ->
