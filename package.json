@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "async": "^1.3.0",
-    "modinha": "0.0.28",
+    "modinha": "0.0.29",
     "redis": "^0.12.1"
   }
 }

@@ -1047,7 +1047,7 @@ describe 'RedisDocument', ->
 
       it 'should deindex each instance', ->
         documents.forEach (doc) ->
-          Document.deindex.should.have.been.calledWith sinon.match.object, doc
+          Document.deindex.should.have.been.calledWith sinon.match.object, sinon.match({_id: doc._id})
 
 
 
@@ -1409,7 +1409,7 @@ describe 'RedisDocument', ->
 
       before (done) ->
         sinon.stub(rclient, 'zrevrange').callsArgWith(3, null, ids)
-        sinon.stub(rclient, 'hmget').callsArgWith(2, null, documents)
+        sinon.stub(rclient, 'hmget').callsArgWith(2, null, jsonDocuments)
         Document.listBySecondary 'value', (error, results) ->
           err = error
           instances = results
@@ -1431,7 +1431,7 @@ describe 'RedisDocument', ->
 
       before (done) ->
         sinon.stub(rclient, 'zrevrange').callsArgWith(3, null, ids)
-        sinon.stub(rclient, 'hmget').callsArgWith(2, null, documents)
+        sinon.stub(rclient, 'hmget').callsArgWith(2, null, jsonDocuments)
         Document.listByReference 'id', (error, results) ->
           err = error
           instances = results
@@ -1453,7 +1453,7 @@ describe 'RedisDocument', ->
 
     before (done) ->
       sinon.stub(rclient, 'zrevrange').callsArgWith(3, null, ids)
-      sinon.stub(rclient, 'hmget').callsArgWith(2, null, documents)
+      sinon.stub(rclient, 'hmget').callsArgWith(2, null, jsonDocuments)
       Document.listNewest (error, result) ->
        err = error
        instances = result
@@ -1483,7 +1483,7 @@ describe 'RedisDocument', ->
 
     before (done) ->
       sinon.stub(rclient, 'zrange').callsArgWith(3, null, ids)
-      sinon.stub(rclient, 'hmget').callsArgWith(2, null, documents)
+      sinon.stub(rclient, 'hmget').callsArgWith(2, null, jsonDocuments)
       Document.listEarliest (error, result) ->
        err = error
        instances = result
