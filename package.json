@@ -2,15 +2,26 @@
   "name": "modinha-redis",
   "version": "0.0.20",
   "description": "Redis persistence mixins for Modinha models",
+  "author": {
+    "name": "Christian Smith",
+    "email": "smith@anvil.io",
+    "url": "http://anvil.io"
+  },
+  "contributors": [
+    {
+      "name": "Vartan Simonian",
+      "email": "vsimonianpress@gmail.com",
+      "url": "http://vsimonian.github.io/"
+    }
+  ],
   "main": "lib/RedisDocument.js",
   "scripts": {
     "test": "standard && grunt test"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/christiansmith/modinha-redis.git"
+    "url": "https://github.com/anvilresearch/modinha-redis.git"
   },
-  "author": "",
   "license": "MIT",
   "devDependencies": {
     "chai": "^3.1.0",
@@ -28,5 +39,8 @@
     "async": "^1.3.0",
     "modinha": "0.0.30",
     "redis": "^0.12.1"
+  },
+  "bugs": {
+    "url": "https://github.com/anvilresearch/modinha-redis/issues"
   }
 }
