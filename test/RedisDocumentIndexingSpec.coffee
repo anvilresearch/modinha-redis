@@ -5,6 +5,7 @@ Faker     = require 'faker'
 chai      = require 'chai'
 sinon     = require 'sinon'
 sinonChai = require 'sinon-chai'
+mockMulti = require './lib/multi'
 expect    = chai.expect
 
 
@@ -25,10 +26,10 @@ RedisDocument = require path.join(cwd, 'lib/RedisDocument')
 
 
 # Redis lib for spying and stubbing
-redis   = require 'redis'
-client  = redis.createClient()
-multi   = redis.Multi.prototype
-rclient = redis.RedisClient.prototype
+Redis   = require 'ioredis'
+client  = new Redis({ port: 12345 })
+rclient = Redis.prototype
+multi   = mockMulti(rclient)
 
 
 
@@ -96,7 +97,7 @@ describe 'Indexing', ->
       field: ['$', ['nested.$', 'flag']]
       value: '_id'
 
-    Document.__redis = redis
+    Document.__redis = Redis
     Document.__client = client
 
     # Mock data
