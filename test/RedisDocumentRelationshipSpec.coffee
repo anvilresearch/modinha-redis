@@ -5,6 +5,7 @@ path      = require 'path'
 chai      = require 'chai'
 sinon     = require 'sinon'
 sinonChai = require 'sinon-chai'
+mockMulti = require './lib/multi'
 expect    = chai.expect
 
 
@@ -24,11 +25,11 @@ RedisDocument = require path.join(cwd, 'lib/RedisDocument')
 
 
 
-## Redis lib for spying and stubbing
-redis   = require 'redis'
-client  = redis.createClient()
-multi   = redis.Multi.prototype
-rclient = redis.RedisClient.prototype
+# Redis lib for spying and stubbing
+Redis   = require 'ioredis'
+client  = new Redis({ port: 12345 })
+rclient = Redis.prototype
+multi   = mockMulti(rclient)
 
 
 
