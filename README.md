@@ -1,4 +1,5 @@
 ## modinha-redis
+[![Build Status](https://travis-ci.org/anvilresearch/modinha-redis.svg?branch=master)](https://travis-ci.org/anvilresearch/modinha-redis)
 
 The RedisDocument mixin for [Modinha](https://github.com/christiansmith/Modinha) defines a collection of persistence methods that map cleanly between HTTP semantics and Redis data structures.
 
