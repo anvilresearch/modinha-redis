@@ -1,3 +1,5 @@
+## modinha-redis
+
 The RedisDocument mixin for [Modinha](https://github.com/christiansmith/Modinha) defines a collection of persistence methods that map cleanly between HTTP semantics and Redis data structures.
 
 ### Usage
