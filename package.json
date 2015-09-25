@@ -16,7 +16,9 @@
   ],
   "main": "lib/RedisDocument.js",
   "scripts": {
-    "test": "standard && grunt test"
+    "test": "mocha test && standard",
+    "lint": "standard",
+    "test-watch": "mocha test --watch"
   },
   "repository": {
     "type": "git",
@@ -28,9 +30,8 @@
     "coffee-script": "^1.9.3",
     "faker": "^3.0.0",
     "grunt": "~0.4.1",
-    "grunt-contrib-watch": "^0.6.1",
-    "grunt-mocha-cov": "^0.4.0",
     "grunt-release": "^0.13.0",
+    "mocha": "^2.3.3",
     "sinon": "^1.15.4",
     "sinon-chai": "^2.8.0",
     "standard": "^5.1.0"
