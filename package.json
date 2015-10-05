@@ -42,7 +42,7 @@
   "dependencies": {
     "async": "^1.3.0",
     "ioredis": "^1.7.5",
-    "modinha": "0.0.33"
+    "modinha": "0.0.35"
   },
   "bugs": {
     "url": "https://github.com/anvilresearch/modinha-redis/issues"
