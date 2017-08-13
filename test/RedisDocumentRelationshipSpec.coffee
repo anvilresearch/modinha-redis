@@ -54,19 +54,19 @@ describe 'Intersect', ->
     RightModel.__client = client
 
   it 'should define an add method on the constructor', ->
-    LeftModel.addRights.should.be.a.function
+    LeftModel.addRights.should.be.a('function')
 
   it 'should define an add method on the prototype', ->
-    LeftModel.prototype.addRights.should.be.a.function
+    LeftModel.prototype.addRights.should.be.a('function')
 
   it 'should define a remove method on the constructor', ->
-    LeftModel.removeRights.should.be.a.function
+    LeftModel.removeRights.should.be.a('function')
 
   it 'should define a remove method on the prototype', ->
-    LeftModel.prototype.removeRights.should.be.a.function
+    LeftModel.prototype.removeRights.should.be.a('function')
 
   it 'should define a list method on the constructor', ->
-    LeftModel.listByRights.should.be.a.function
+    LeftModel.listByRights.should.be.a('function')
 
 
 
