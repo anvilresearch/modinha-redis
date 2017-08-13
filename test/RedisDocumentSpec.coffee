@@ -64,7 +64,7 @@ describe 'RedisDocument', ->
 
     for i in [0..9]
       data.push
-        description: faker.lorem.words(5).join(' ')
+        description: faker.lorem.words(5)
         deleted: 'not deleted'
         unique: faker.random.number(1000).toString()
         secondary: faker.random.number(1000).toString()
@@ -84,7 +84,7 @@ describe 'RedisDocument', ->
   describe 'schema', ->
 
     it 'should have unique identifier', ->
-      Document.schema[Document.uniqueId].should.be.an.object
+      Document.schema[Document.uniqueId].should.be.a('object')
 
     it 'should have "created" timestamp', ->
       Document.schema.created.default.should.equal Modinha.defaults.timestamp
