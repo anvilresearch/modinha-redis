@@ -1,6 +1,6 @@
 {
   "name": "modinha-redis",
-  "version": "0.0.28",
+  "version": "0.1.0",
   "description": "Redis persistence mixins for Modinha models",
   "author": {
     "name": "Christian Smith",
