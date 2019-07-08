@@ -31,22 +31,23 @@
   "devDependencies": {
     "chai": "^4.1.1",
     "coffee-script": "^1.12.7",
-    "eslint": "^4.4.1",
-    "eslint-config-standard": "^10.2.1",
-    "eslint-plugin-import": "^2.7.0",
-    "eslint-plugin-node": "^5.1.1",
-    "eslint-plugin-promise": "^3.5.0",
-    "eslint-plugin-standard": "^3.0.1",
+    "eslint": "^6.0.1",
+    "eslint-config-standard": "^12.0.0",
+    "eslint-plugin-import": "^2.18.0",
+    "eslint-plugin-node": "^9.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.0",
     "faker": "^4.1.0",
-    "grunt": "~1.0.1",
+    "grunt": "~1.0.4",
     "grunt-release": "^0.14.0",
-    "mocha": "^3.5.0",
-    "sinon": "^2.1.0",
-    "sinon-chai": "^2.12.0"
+    "mocha": "^5.2.0",
+    "redis-mock": "^0.44.0",
+    "sinon": "^7.3.2",
+    "sinon-chai": "^3.3.0"
   },
   "dependencies": {
-    "async": "2.6.1",
-    "ioredis": "4.6.2",
+    "async": "3.1.0",
+    "ioredis": "4.11.1",
     "modinha": "0.1.0"
   },
   "bugs": {

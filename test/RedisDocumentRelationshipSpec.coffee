@@ -26,10 +26,9 @@ RedisDocument = require path.join(cwd, 'lib/RedisDocument')
 
 
 # Redis lib for spying and stubbing
-Redis   = require 'ioredis'
-client  = new Redis({ port: 12345 })
-rclient = Redis.prototype
-multi   = mockMulti(rclient)
+Redis   = require 'redis-mock'
+client  = Redis.createClient()
+multi   = mockMulti(client)
 
 
 
@@ -175,13 +174,13 @@ describe 'Intersect', ->
       before (done) ->
         right = new RightModel
         sinon.spy LeftModel, 'list'
-        sinon.stub(rclient, 'zrange').callsArgWith 3, null, []
-        sinon.stub(rclient, 'zrevrange').callsArgWith 3, null, []
+        sinon.stub(client, 'zrange').callsArgWith 3, null, []
+        sinon.stub(client, 'zrevrange').callsArgWith 3, null, []
         LeftModel.listByRights right, done
 
       after ->
-        rclient.zrange.restore()
-        rclient.zrevrange.restore()
+        client.zrange.restore()
+        client.zrevrange.restore()
         LeftModel.list.restore()
 
       it 'should look in the right index', ->
@@ -192,14 +191,14 @@ describe 'Intersect', ->
 
       before (done) ->
         right = new RightModel
-        sinon.stub(rclient, 'zrange').callsArgWith 3, null, []
-        sinon.stub(rclient, 'zrevrange').callsArgWith 3, null, []
+        sinon.stub(client, 'zrange').callsArgWith 3, null, []
+        sinon.stub(client, 'zrevrange').callsArgWith 3, null, []
         sinon.spy LeftModel, 'list'
         LeftModel.listByRights right._id, done
 
       after ->
-        rclient.zrange.restore()
-        rclient.zrevrange.restore()
+        client.zrange.restore()
+        client.zrevrange.restore()
         LeftModel.list.restore()
 
       it 'should look in the right index', ->

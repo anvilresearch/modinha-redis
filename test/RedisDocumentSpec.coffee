@@ -26,10 +26,9 @@ RedisDocument = require path.join(cwd, 'lib/RedisDocument')
 
 
 # Redis lib for spying and stubbing
-Redis   = require 'ioredis'
-client  = new Redis({ port: 12345 })
-rclient = Redis.prototype
-multi   = mockMulti(rclient)
+Redis   = require 'redis-mock'
+client  = Redis.createClient()
+multi   = mockMulti(client)
 
 
 
@@ -101,19 +100,19 @@ describe 'RedisDocument', ->
     describe 'by default', ->
 
       before (done) ->
-        sinon.stub(rclient, 'zrevrange').callsArgWith 3, null, ids
-        sinon.stub(rclient, 'hmget').callsArgWith 2, null, jsonDocuments
+        sinon.stub(client, 'zrevrange').callsArgWith 3, null, ids
+        sinon.stub(client, 'hmget').callsArgWith 2, null, jsonDocuments
         Document.list (error, results) ->
           err = error
           instances = results
           done()
 
       after ->
-        rclient.hmget.restore()
-        rclient.zrevrange.restore()
+        client.hmget.restore()
+        client.zrevrange.restore()
 
       it 'should query the created index', ->
-        rclient.zrevrange.should.have.been.calledWith 'documents:created', 0, 49
+        client.zrevrange.should.have.been.calledWith 'documents:created', 0, 49
 
       it 'should provide null error', ->
         expect(err).to.be.null
@@ -128,25 +127,25 @@ describe 'RedisDocument', ->
           expect(instance.secret).to.be.undefined
 
       it 'should provide the list in reverse chronological order', ->
-        rclient.zrevrange.should.have.been.called
+        client.zrevrange.should.have.been.called
 
 
     describe 'by index', ->
 
       before (done) ->
-        sinon.stub(rclient, 'zrevrange').callsArgWith 3, null, ids
-        sinon.stub(rclient, 'hmget').callsArgWith 2, null, jsonDocuments
+        sinon.stub(client, 'zrevrange').callsArgWith 3, null, ids
+        sinon.stub(client, 'hmget').callsArgWith 2, null, jsonDocuments
         Document.list { index: 'documents:secondary:value' }, (error, results) ->
           err = error
           instances = results
           done()
 
       after ->
-        rclient.hmget.restore()
-        rclient.zrevrange.restore()
+        client.hmget.restore()
+        client.zrevrange.restore()
 
       it 'should query the provided index', ->
-        rclient.zrevrange.should.have.been.calledWith 'documents:secondary:value'
+        client.zrevrange.should.have.been.calledWith 'documents:secondary:value'
 
       it 'should provide null error', ->
         expect(err).to.be.null
@@ -164,19 +163,19 @@ describe 'RedisDocument', ->
     describe 'with paging', ->
 
       before (done) ->
-        sinon.stub(rclient, 'zrevrange').callsArgWith 3, null, ids
-        sinon.stub(rclient, 'hmget').callsArgWith 2, null, jsonDocuments
+        sinon.stub(client, 'zrevrange').callsArgWith 3, null, ids
+        sinon.stub(client, 'hmget').callsArgWith 2, null, jsonDocuments
         Document.list { page: 2, size: 3 }, (error, results) ->
           err = error
           instances = results
           done()
 
       after ->
-        rclient.hmget.restore()
-        rclient.zrevrange.restore()
+        client.hmget.restore()
+        client.zrevrange.restore()
 
       it 'should retrieve a range of values', ->
-        rclient.zrevrange.should.have.been.calledWith 'documents:created', 3, 5
+        client.zrevrange.should.have.been.calledWith 'documents:created', 3, 5
 
       it 'should provide null error', ->
         expect(err).to.be.null
@@ -190,14 +189,14 @@ describe 'RedisDocument', ->
     describe 'with no results', ->
 
       before (done) ->
-        sinon.stub(rclient, 'zrevrange').callsArgWith(3, null, [])
+        sinon.stub(client, 'zrevrange').callsArgWith(3, null, [])
         Document.list { page: 2, size: 3 }, (error, results) ->
           err = error
           instances = results
           done()
 
       after ->
-        rclient.zrevrange.restore()
+        client.zrevrange.restore()
 
       it 'should provide null error', ->
         expect(err).to.be.null
@@ -210,16 +209,16 @@ describe 'RedisDocument', ->
     describe 'with selection', ->
 
       before (done) ->
-        sinon.stub(rclient, 'zrevrange').callsArgWith 3, null, ids
-        sinon.stub(rclient, 'hmget').callsArgWith 2, null, jsonDocuments
+        sinon.stub(client, 'zrevrange').callsArgWith 3, null, ids
+        sinon.stub(client, 'hmget').callsArgWith 2, null, jsonDocuments
         Document.list { select: [ 'description', 'secret' ] }, (error, results) ->
           err = error
           instances = results
           done()
 
       after ->
-        rclient.hmget.restore()
-        rclient.zrevrange.restore()
+        client.hmget.restore()
+        client.zrevrange.restore()
 
       it 'should provide null error', ->
         expect(err).to.be.null
@@ -242,16 +241,16 @@ describe 'RedisDocument', ->
     describe 'with private option', ->
 
       before (done) ->
-        sinon.stub(rclient, 'zrevrange').callsArgWith 3, null, ids
-        sinon.stub(rclient, 'hmget').callsArgWith 2, null, jsonDocuments
+        sinon.stub(client, 'zrevrange').callsArgWith 3, null, ids
+        sinon.stub(client, 'hmget').callsArgWith 2, null, jsonDocuments
         Document.list { private: true }, (error, results) ->
           err = error
           instances = results
           done()
 
       after ->
-        rclient.hmget.restore()
-        rclient.zrevrange.restore()
+        client.hmget.restore()
+        client.zrevrange.restore()
 
       it 'should provide null error', ->
         expect(err).to.be.null
@@ -269,19 +268,19 @@ describe 'RedisDocument', ->
     describe 'in chronological order', ->
 
       before (done) ->
-        sinon.stub(rclient, 'zrange').callsArgWith 3, null, ids
-        sinon.stub(rclient, 'hmget').callsArgWith 2, null, jsonDocuments
+        sinon.stub(client, 'zrange').callsArgWith 3, null, ids
+        sinon.stub(client, 'hmget').callsArgWith 2, null, jsonDocuments
         Document.list { order: 'normal' }, (error, results) ->
           err = error
           instances = results
           done()
 
       after ->
-        rclient.hmget.restore()
-        rclient.zrange.restore()
+        client.hmget.restore()
+        client.zrange.restore()
 
       it 'should query the created index', ->
-        rclient.zrange.should.have.been.calledWith 'documents:created', 0, 49
+        client.zrange.should.have.been.calledWith 'documents:created', 0, 49
 
       it 'should provide null error', ->
         expect(err).to.be.null
@@ -296,7 +295,7 @@ describe 'RedisDocument', ->
           expect(instance.secret).to.be.undefined
 
       it 'should provide the list in chronological order', ->
-        rclient.zrange.should.have.been.called
+        client.zrange.should.have.been.called
 
 
 
@@ -308,14 +307,14 @@ describe 'RedisDocument', ->
       before (done) ->
         document = documents[0]
         json = jsonDocuments[0]
-        sinon.stub(rclient, 'hmget').callsArgWith 2, null, [json]
+        sinon.stub(client, 'hmget').callsArgWith 2, null, [json]
         Document.get documents[0]._id, (error, result) ->
           err = error
           instance = result
           done()
 
       after ->
-        rclient.hmget.restore()
+        client.hmget.restore()
 
       it 'should provide null error', ->
         expect(err).to.be.null
@@ -330,16 +329,15 @@ describe 'RedisDocument', ->
     describe 'by string not found', ->
 
       before (done) ->
-        sinon.stub rclient, 'hmget', (collection, ids, cb) ->
-          if cb
-            cb null, []
+        sinon.stub client, 'hmget'
         Document.get 'unknown', (error, result) ->
           err = error
           instance = result
           done()
+        client.hmget.callArgWith(2,null, [])
 
       after ->
-        rclient.hmget.restore()
+        client.hmget.restore()
 
       it 'should provide null error', ->
         expect(err).to.be.null
@@ -351,14 +349,14 @@ describe 'RedisDocument', ->
     describe 'by array', ->
 
       before (done) ->
-        sinon.stub(rclient, 'hmget').callsArgWith 2, null, jsonDocuments
+        sinon.stub(client, 'hmget').callsArgWith 2, null, jsonDocuments
         Document.get ids, (error, results) ->
           err = error
           instances = results
           done()
 
       after ->
-        rclient.hmget.restore()
+        client.hmget.restore()
 
       it 'should provide null error', ->
         expect(err).to.be.null
@@ -399,16 +397,16 @@ describe 'RedisDocument', ->
     describe 'with selection', ->
 
       before (done) ->
-        sinon.spy rclient, 'zrevrange'
-        sinon.stub(rclient, 'hmget').callsArgWith 2, null, jsonDocuments
+        sinon.spy client, 'zrevrange'
+        sinon.stub(client, 'hmget').callsArgWith 2, null, jsonDocuments
         Document.get ids, { select: [ 'description', 'secret' ] }, (error, results) ->
           err = error
           instances = results
           done()
 
       after ->
-        rclient.hmget.restore()
-        rclient.zrevrange.restore()
+        client.hmget.restore()
+        client.zrevrange.restore()
 
       it 'should provide null error', ->
         expect(err).to.be.null
@@ -433,14 +431,14 @@ describe 'RedisDocument', ->
       before (done) ->
         document = documents[0]
         json = jsonDocuments[0]
-        sinon.stub(rclient, 'hmget').callsArgWith 2, null, [json]
+        sinon.stub(client, 'hmget').callsArgWith 2, null, [json]
         Document.get documents[0]._id, { private: true }, (error, result) ->
           err = error
           instance = result
           done()
 
       after ->
-        rclient.hmget.restore()
+        client.hmget.restore()
 
       it 'should provide null error', ->
         expect(err).to.be.null
@@ -692,7 +690,7 @@ describe 'RedisDocument', ->
 
         sinon.stub(Document, 'get').callsArgWith(2, null, doc)
         sinon.stub(Document, 'enforceUnique').callsArgWith(1, null)
-        sinon.stub(rclient, 'hmget').callsArgWith(2, null, [json])
+        sinon.stub(client, 'hmget').callsArgWith(2, null, [json])
         sinon.spy Document, 'reindex'
         sinon.stub multi, 'hset'
         sinon.stub multi, 'zadd'
@@ -709,7 +707,7 @@ describe 'RedisDocument', ->
           done()
 
       after ->
-        rclient.hmget.restore()
+        client.hmget.restore()
         Document.get.restore()
         Document.enforceUnique.restore()
         Document.reindex.restore()
@@ -774,7 +772,7 @@ describe 'RedisDocument', ->
         doc = documents[0]
         json = jsonDocuments[0]
 
-        sinon.stub(rclient, 'hmget').callsArgWith(2, null, [json])
+        sinon.stub(client, 'hmget').callsArgWith(2, null, [json])
         sinon.spy Document, 'reindex'
         sinon.spy Document, 'serialize'
         sinon.stub(Document, 'enforceUnique').callsArgWith(1, null)
@@ -796,7 +794,7 @@ describe 'RedisDocument', ->
           done()
 
       after ->
-        rclient.hmget.restore()
+        client.hmget.restore()
         Document.reindex.restore()
         Document.enforceUnique.restore()
         multi.hset.restore()
@@ -855,7 +853,7 @@ describe 'RedisDocument', ->
         doc = documents[0]
         json = jsonDocuments[0]
 
-        sinon.stub(rclient, 'hmget').callsArgWith(2, null, [json])
+        sinon.stub(client, 'hmget').callsArgWith(2, null, [json])
         sinon.spy multi, 'hset'
         sinon.spy multi, 'zadd'
 
@@ -865,7 +863,7 @@ describe 'RedisDocument', ->
           done()
 
       after ->
-        rclient.hmget.restore()
+        client.hmget.restore()
         multi.hset.restore()
         multi.zadd.restore()
 
@@ -882,7 +880,7 @@ describe 'RedisDocument', ->
         doc = documents[0]
         json = jsonDocuments[0]
         sinon.stub(Document, 'enforceUnique').callsArgWith(1, null)
-        sinon.stub(rclient, 'hmget').callsArgWith(2, null, [json])
+        sinon.stub(client, 'hmget').callsArgWith(2, null, [json])
         sinon.spy Document, 'reindex'
 
 
@@ -901,7 +899,7 @@ describe 'RedisDocument', ->
           done()
 
       after ->
-        rclient.hmget.restore()
+        client.hmget.restore()
         Document.reindex.restore()
         multi.hset.restore()
         multi.zadd.restore()
@@ -1319,9 +1317,9 @@ describe 'RedisDocument', ->
         doc  = documents[0]
         json = jsonDocuments[0]
 
-        sinon.stub(rclient, 'hget')
+        sinon.stub(client, 'hget')
           .callsArgWith 2, null, doc._id
-        sinon.stub(rclient, 'hmget')
+        sinon.stub(client, 'hmget')
           .callsArgWith 2, null, json
 
         Document.getByUnique doc._id, (error, result) ->
@@ -1330,8 +1328,8 @@ describe 'RedisDocument', ->
           done()
 
       after ->
-        rclient.hmget.restore()
-        rclient.hget.restore()
+        client.hmget.restore()
+        client.hget.restore()
 
       it 'should provide a null error', ->
         expect(err).to.be.null
@@ -1406,16 +1404,16 @@ describe 'RedisDocument', ->
   describe 'list by secondary index', ->
 
       before (done) ->
-        sinon.stub(rclient, 'zrevrange').callsArgWith(3, null, ids)
-        sinon.stub(rclient, 'hmget').callsArgWith(2, null, jsonDocuments)
+        sinon.stub(client, 'zrevrange').callsArgWith(3, null, ids)
+        sinon.stub(client, 'hmget').callsArgWith(2, null, jsonDocuments)
         Document.listBySecondary 'value', (error, results) ->
           err = error
           instances = results
           done()
 
       after ->
-        rclient.zrevrange.restore()
-        rclient.hmget.restore()
+        client.zrevrange.restore()
+        client.hmget.restore()
 
       it 'should provide a null error', ->
         expect(err).to.be.null
@@ -1428,16 +1426,16 @@ describe 'RedisDocument', ->
   describe 'list by reference', ->
 
       before (done) ->
-        sinon.stub(rclient, 'zrevrange').callsArgWith(3, null, ids)
-        sinon.stub(rclient, 'hmget').callsArgWith(2, null, jsonDocuments)
+        sinon.stub(client, 'zrevrange').callsArgWith(3, null, ids)
+        sinon.stub(client, 'hmget').callsArgWith(2, null, jsonDocuments)
         Document.listByReference 'id', (error, results) ->
           err = error
           instances = results
           done()
 
       after ->
-        rclient.zrevrange.restore()
-        rclient.hmget.restore()
+        client.zrevrange.restore()
+        client.hmget.restore()
 
       it 'should provide a null error', ->
         expect(err).to.be.null
@@ -1450,16 +1448,16 @@ describe 'RedisDocument', ->
   describe 'list newest', ->
 
     before (done) ->
-      sinon.stub(rclient, 'zrevrange').callsArgWith(3, null, ids)
-      sinon.stub(rclient, 'hmget').callsArgWith(2, null, jsonDocuments)
+      sinon.stub(client, 'zrevrange').callsArgWith(3, null, ids)
+      sinon.stub(client, 'hmget').callsArgWith(2, null, jsonDocuments)
       Document.listNewest (error, result) ->
        err = error
        instances = result
        done()
 
     after ->
-      rclient.zrevrange.restore()
-      rclient.hmget.restore()
+      client.zrevrange.restore()
+      client.hmget.restore()
 
     it 'should provide a null error', ->
       expect(err).to.be.null
@@ -1469,10 +1467,10 @@ describe 'RedisDocument', ->
         expect(instance).to.be.instanceof Document
 
     it 'should provide results in reverse chronological order', ->
-      rclient.zrevrange.should.have.been.called
+      client.zrevrange.should.have.been.called
 
     it 'should look in the correct index', ->
-      rclient.zrevrange.should.have.been.calledWith 'documents:created'
+      client.zrevrange.should.have.been.calledWith 'documents:created'
 
 
 
@@ -1480,16 +1478,16 @@ describe 'RedisDocument', ->
   describe 'list earliest', ->
 
     before (done) ->
-      sinon.stub(rclient, 'zrange').callsArgWith(3, null, ids)
-      sinon.stub(rclient, 'hmget').callsArgWith(2, null, jsonDocuments)
+      sinon.stub(client, 'zrange').callsArgWith(3, null, ids)
+      sinon.stub(client, 'hmget').callsArgWith(2, null, jsonDocuments)
       Document.listEarliest (error, result) ->
        err = error
        instances = result
        done()
 
     after ->
-      rclient.zrange.restore()
-      rclient.hmget.restore()
+      client.zrange.restore()
+      client.hmget.restore()
 
     it 'should provide a null error', ->
       expect(err).to.be.null
@@ -1499,10 +1497,10 @@ describe 'RedisDocument', ->
         expect(instance).to.be.instanceof Document
 
     it 'should provide results in chronological order', ->
-      rclient.zrange.should.have.been.called
+      client.zrange.should.have.been.called
 
     it 'should look in the correct index', ->
-      rclient.zrange.should.have.been.calledWith 'documents:created'
+      client.zrange.should.have.been.calledWith 'documents:created'
 
 
 

@@ -26,10 +26,9 @@ RedisDocument = require path.join(cwd, 'lib/RedisDocument')
 
 
 # Redis lib for spying and stubbing
-Redis   = require 'ioredis'
-client  = new Redis({ port: 12345 })
-rclient = Redis.prototype
-multi   = mockMulti(rclient)
+Redis   = require 'redis-mock'
+client  = Redis.createClient()
+multi   = mockMulti(client)
 
 
 
