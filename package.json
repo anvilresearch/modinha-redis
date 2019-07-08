@@ -1,36 +1,27 @@
 {
-  "name": "modinha-redis",
-  "version": "0.1.0",
-  "description": "Redis persistence mixins for Modinha models",
-  "author": {
-    "name": "Christian Smith",
-    "email": "smith@anvil.io",
-    "url": "http://anvil.io"
-  },
-  "contributors": [
-    {
-      "name": "Vartan Simonian",
-      "email": "vsimonianpress@gmail.com",
-      "url": "http://vsimonian.github.io/"
-    }
-  ],
+  "name": "camfou-modinha-redis",
+  "version": "0.2.0",
+  "description": "Fork of Redis persistence mixins for Modinha models",
   "main": "lib/RedisDocument.js",
   "scripts": {
-    "test": "mocha test && eslint . && echo Code looks good!",
-    "lint": "eslint . && echo Code looks good!",
-    "test-watch": "mocha test --watch"
+    "test": "mocha && npm run lint",
+    "lint": "eslint -c .eslintrc lib/** && echo Code looks good!",
+    "test-watch": "mocha test --watch",
+    "cover": "istanbul cover _mocha",
+    "coveralls": "npm run cover -- --report lcovonly && cat ./coverage/lcov.info | coveralls"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/anvilresearch/modinha-redis.git"
+    "url": "https://github.com/camfou/modinha-redis.git"
   },
   "license": "MIT",
   "engines": {
-    "node": ">=6.11.2"
+    "node": ">=10"
   },
   "devDependencies": {
     "chai": "^4.1.1",
     "coffee-script": "^1.12.7",
+    "coveralls": "^3.0.4",
     "eslint": "^6.0.1",
     "eslint-config-standard": "^12.0.0",
     "eslint-plugin-import": "^2.18.0",
@@ -40,6 +31,7 @@
     "faker": "^4.1.0",
     "grunt": "~1.0.4",
     "grunt-release": "^0.14.0",
+    "istanbul": "^0.4.5",
     "mocha": "^5.2.0",
     "redis-mock": "^0.44.0",
     "sinon": "^7.3.2",
