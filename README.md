@@ -1,7 +1,7 @@
 ## modinha-redis
-[![Build Status](https://travis-ci.org/anvilresearch/modinha-redis.svg?branch=master)](https://travis-ci.org/anvilresearch/modinha-redis)
+[![Build Status](https://travis-ci.org/camfou/modinha-redis.svg?branch=master)](https://travis-ci.org/camfou/modinha-redis)
 
-The RedisDocument mixin for [Modinha](https://github.com/christiansmith/Modinha) defines a collection of persistence methods that map cleanly between HTTP semantics and Redis data structures.
+The RedisDocument mixin defines a collection of persistence methods that map cleanly between HTTP semantics and Redis data structures.
 
 ### Usage
 
@@ -9,7 +9,7 @@ Suppose we've defined an Account model with Modinha like so:
 
 ```javascript
 var Modinha = require('modinha')
-  , RedisDocument = require('modinha-redis').RedisDocument
+  , RedisDocument = require('camfou-modinha-redis').RedisDocument
 
 var Account = Modinha.define('accounts', {
   email: { type: 'string', required: true, unique: true },
