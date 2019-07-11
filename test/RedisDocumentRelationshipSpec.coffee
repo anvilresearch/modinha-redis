@@ -19,7 +19,7 @@ chai.should()
 
 
 ## Code under test
-Modinha       = require 'modinha'
+Modinha       = require 'camfou-modinha'
 RedisDocument = require path.join(cwd, 'lib/RedisDocument')
 
 

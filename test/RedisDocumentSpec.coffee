@@ -19,7 +19,7 @@ chai.should()
 
 
 # Code under test
-Modinha       = require 'modinha'
+Modinha       = require 'camfou-modinha'
 RedisDocument = require path.join(cwd, 'lib/RedisDocument')
 
 
@@ -448,6 +448,27 @@ describe 'RedisDocument', ->
 
       it 'should initialize private properties', ->
         expect(instance.secret).to.equal 'nobody knows'
+
+
+    describe 'without ids', ->
+
+      before (done) ->
+        document = documents[0]
+        json = jsonDocuments[0]
+        sinon.stub(client, 'hmget').callsArgWith 2, null, [json]
+        Document.get null, { private: true }, (error, result) ->
+          err = error
+          instance = result
+          done()
+
+      after ->
+        client.hmget.restore()
+
+      it 'should provide null error', ->
+        expect(err).to.be.null
+
+      it 'should provide null result', ->
+        expect(instance).to.be.null
 
 
 
