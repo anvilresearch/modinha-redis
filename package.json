@@ -23,7 +23,7 @@
     "coffee-script": "^1.12.7",
     "coveralls": "^3.0.4",
     "eslint": "^6.0.1",
-    "eslint-config-standard": "^12.0.0",
+    "eslint-config-standard": "^13.0.0",
     "eslint-plugin-import": "^2.18.0",
     "eslint-plugin-node": "^9.1.0",
     "eslint-plugin-promise": "^4.2.1",
@@ -40,7 +40,7 @@
   "dependencies": {
     "async": "3.1.0",
     "ioredis": "4.11.1",
-    "modinha": "0.1.0"
+    "camfou-modinha": "0.2.0"
   },
   "bugs": {
     "url": "https://github.com/anvilresearch/modinha-redis/issues"
