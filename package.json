@@ -1,6 +1,6 @@
 {
   "name": "camfou-modinha-redis",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Fork of Redis persistence mixins for Modinha models",
   "main": "lib/RedisDocument.js",
   "scripts": {
