@@ -8,7 +8,7 @@ The RedisDocument mixin defines a collection of persistence methods that map cle
 Suppose we've defined an Account model with Modinha like so:
 
 ```javascript
-var Modinha = require('modinha')
+var Modinha = require('camfou-modinha')
   , RedisDocument = require('camfou-modinha-redis').RedisDocument
 
 var Account = Modinha.define('accounts', {

@@ -1,1 +1,1 @@
---compilers coffee:coffee-script/register -R dot --recursive
+--require coffeescript/register -R spec --recursive test/**/*.{js,coffee}
