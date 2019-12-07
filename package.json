@@ -1,6 +1,6 @@
 {
   "name": "camfou-modinha-redis",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Fork of Redis persistence mixins for Modinha models",
   "main": "lib/RedisDocument.js",
   "scripts": {
@@ -15,34 +15,29 @@
     "url": "https://github.com/camfou/modinha-redis.git"
   },
   "license": "MIT",
-  "engines": {
-    "node": ">=10"
-  },
   "devDependencies": {
     "chai": "^4.1.1",
-    "coffee-script": "^1.12.7",
-    "coveralls": "^3.0.4",
-    "eslint": "^6.0.1",
-    "eslint-config-standard": "^13.0.0",
-    "eslint-plugin-import": "^2.18.0",
-    "eslint-plugin-node": "^9.1.0",
+    "coffeescript": "^2.4.1",
+    "coveralls": "^3.0.9",
+    "eslint": "^6.7.2",
+    "eslint-config-standard": "^14.1.0",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-node": "^10.0.0",
     "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-standard": "^4.0.0",
+    "eslint-plugin-standard": "^4.0.1",
     "faker": "^4.1.0",
-    "grunt": "~1.0.4",
-    "grunt-release": "^0.14.0",
     "istanbul": "^0.4.5",
-    "mocha": "^5.2.0",
-    "redis-mock": "^0.44.0",
-    "sinon": "^7.3.2",
+    "mocha": "^6.2.2",
+    "redis-mock": "^0.47.0",
+    "sinon": "^7.5.0",
     "sinon-chai": "^3.3.0"
   },
   "dependencies": {
     "async": "3.1.0",
-    "ioredis": "4.11.1",
-    "camfou-modinha": "0.2.0"
+    "ioredis": "4.14.1",
+    "camfou-modinha": "0.2.1"
   },
   "bugs": {
-    "url": "https://github.com/anvilresearch/modinha-redis/issues"
+    "url": "https://github.com/camfou/modinha-redis/issues"
   }
 }
