@@ -4,11 +4,10 @@
   "description": "Fork of Redis persistence mixins for Modinha models",
   "main": "lib/RedisDocument.js",
   "scripts": {
-    "test": "mocha && npm run lint",
-    "lint": "eslint -c .eslintrc lib/** && echo Code looks good!",
+    "test": "mocha",
+    "lint": "eslint -c .eslintrc lib/**",
     "test-watch": "mocha test --watch",
-    "cover": "istanbul cover _mocha",
-    "coveralls": "npm run cover -- --report lcovonly && cat ./coverage/lcov.info | coveralls"
+    "cover": "istanbul cover _mocha --report lcovonly"
   },
   "repository": {
     "type": "git",
