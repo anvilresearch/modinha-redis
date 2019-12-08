@@ -24,6 +24,9 @@ jobs:
       uses: coverallsapp/github-action@master
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
-    - name : Test conndition
-      if: github.ref == 'master'
-      run: echo This is master branch
+    - name: semantic-release
+      if: success() && github.ref == 'refs/heads/master'
+      env:
+        GH_TOKEN: ${{ secrets.DEPLOY_GH_TOKEN }}
+        NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      run: echo Ready to release // npm run semantic-release
