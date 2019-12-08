@@ -24,3 +24,6 @@ jobs:
       uses: coverallsapp/github-action@master
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
+    - name : Test conndition
+        if: github.ref == 'master'
+        run: echo This is master branch
