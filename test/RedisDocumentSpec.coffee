@@ -604,6 +604,34 @@ describe 'RedisDocument', ->
       it 'should not provide an instance', ->
         expect(instance).to.be.undefined
 
+    describe 'with duplicate check error', ->
+
+      beforeEach (done) ->
+        sinon.stub multi, 'hset'
+        sinon.stub multi, 'zadd'
+        sinon.stub(multi, 'exec').callsArgWith 0, null, []
+        sinon.spy Document, 'index'
+        sinon.stub(Document, 'getByUnique')
+          .callsArgWith 1, new Error
+
+        Document.insert data[0], (error, result) ->
+          err = error
+          instance = result
+          done()
+
+      afterEach ->
+        multi.hset.restore()
+        multi.zadd.restore()
+        multi.exec.restore()
+        Document.index.restore()
+        Document.getByUnique.restore()
+
+      it 'should provide a unique value error', ->
+        expect(err).to.be.instanceof Error
+
+      it 'should not provide an instance', ->
+        expect(instance).to.be.undefined
+
 
     describe 'with empty data', ->
     describe 'with mapping', ->
