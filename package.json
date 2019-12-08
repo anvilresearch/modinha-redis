@@ -1,13 +1,14 @@
 {
   "name": "camfou-modinha-redis",
-  "version": "0.3.1",
+  "version": "0.0.0-development",
   "description": "Fork of Redis persistence mixins for Modinha models",
   "main": "lib/RedisDocument.js",
   "scripts": {
     "test": "mocha",
     "lint": "eslint -c .eslintrc lib/**",
     "test-watch": "mocha test --watch",
-    "cover": "istanbul cover _mocha --report lcovonly"
+    "cover": "istanbul cover _mocha --report lcovonly",
+    "semantic-release": "semantic-release"
   },
   "repository": {
     "type": "git",
@@ -28,6 +29,7 @@
     "istanbul": "^0.4.5",
     "mocha": "^6.2.2",
     "redis-mock": "^0.47.0",
+    "semantic-release": "^15.13.31",
     "sinon": "^7.5.0",
     "sinon-chai": "^3.3.0"
   },
