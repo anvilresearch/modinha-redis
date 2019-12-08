@@ -5,3 +5,4 @@ npm-debug.log
 # Coverage directory used by tools like istanbul
 coverage
 .idea/
+/.nyc_output/

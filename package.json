@@ -7,7 +7,7 @@
     "test": "mocha",
     "lint": "eslint -c .eslintrc lib/**",
     "test-watch": "mocha test --watch",
-    "cover": "istanbul cover _mocha --report lcovonly",
+    "cover": "nyc --reporter=lcov npm run test ",
     "semantic-release": "semantic-release"
   },
   "repository": {
@@ -26,7 +26,6 @@
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.1",
     "faker": "^4.1.0",
-    "istanbul": "^0.4.5",
     "mocha": "^6.2.2",
     "redis-mock": "^0.47.0",
     "semantic-release": "^15.13.31",
@@ -34,8 +33,9 @@
     "sinon-chai": "^3.3.0"
   },
   "dependencies": {
+    "camfou-modinha": "0.2.1",
     "ioredis": "4.14.1",
-    "camfou-modinha": "0.2.1"
+    "nyc": "^14.1.1"
   },
   "bugs": {
     "url": "https://github.com/camfou/modinha-redis/issues"
