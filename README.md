@@ -124,7 +124,6 @@ Unique values are enforced by the `insert`, `replace`, and `patch` methods. If y
 The default timestamp methods define an ordered index for created and modified. `Account.list(options, callback)` uses the `accounts:created` index by default to deliver reverse chronological account listings.
 
 
-
 ## The MIT License
 
 Copyright (c) 2015 Anvil Research, Inc. http://anvil.io
