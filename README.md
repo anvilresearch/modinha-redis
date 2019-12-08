@@ -1,5 +1,5 @@
-## modinha-redis
-[![Build Status](https://travis-ci.org/camfou/modinha-redis.svg?branch=master)](https://travis-ci.org/camfou/modinha-redis)
+## camfou-modinha-redis
+![Actions Status](https://github.com/camfou/modinha-redis/workflows/Node%20CI/badge.svg) ![npm](https://img.shields.io/david/camfou/modinha-redis.svg?style=flat) ![Coverage Status](https://coveralls.io/repos/github/camfou/modinha-redis/badge.svg?branch=master)
 
 The RedisDocument mixin defines a collection of persistence methods that map cleanly between HTTP semantics and Redis data structures.
 
