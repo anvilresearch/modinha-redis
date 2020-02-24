@@ -74,6 +74,7 @@ describe 'Indexing', ->
       key:    ['documents:#:$', 'secondary', 'secondary']
       score:  'modified'
       member: '_id'
+      ttl: 86400
 
     # compound field name
     Document.defineIndex
@@ -81,6 +82,7 @@ describe 'Indexing', ->
       key:   'a:b:c'
       field: ['$:$', 'reference', 'secondary']
       value: '_id'
+      ttl: 86400
 
     # nested property
     Document.defineIndex
@@ -161,12 +163,14 @@ describe 'Indexing', ->
       instance = documents[0]
       sinon.stub multi, 'hset'
       sinon.stub multi, 'zadd'
+      sinon.stub multi, 'expire'
       sinon.stub(multi, 'exec').callsArgWith(0, null, [])
       Document.index m, instance
 
     after ->
       multi.hset.restore()
       multi.zadd.restore()
+      multi.expire.restore()
       multi.exec.restore()
 
     it 'should add a field to a hash', ->
@@ -183,6 +187,12 @@ describe 'Indexing', ->
 
     it 'should add a member to a sorted set', ->
       multi.zadd.should.have.been.calledWith "documents:secondary:#{instance.secondary}", sinon.match.number, instance._id
+
+    it 'should expire the sorted set if ttl provided', ->
+      multi.expire.should.have.been.calledWith "documents:secondary:#{instance.secondary}", sinon.match.number
+
+    it 'should expire the hash if ttl provided', ->
+      multi.expire.should.have.been.calledWith "a:b:c", sinon.match.number
 
 
 
