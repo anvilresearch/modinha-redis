@@ -129,6 +129,26 @@ describe 'RedisDocument', ->
       it 'should provide the list in reverse chronological order', ->
         client.zrevrange.should.have.been.called
 
+    describe 'with pagination', ->
+
+      before (done) ->
+        sinon.stub(client, 'zrevrange').callsArgWith 3, null, ids
+        sinon.stub(client, 'hmget').callsArgWith 2, null, jsonDocuments
+        Document.list {
+          page: 3,
+          size: 3
+        }, (error, results) ->
+          err = error
+          instances = results
+          done()
+
+      after ->
+        client.hmget.restore()
+        client.zrevrange.restore()
+
+      it 'should query the created index with correct range', ->
+        client.zrevrange.should.have.been.calledWith 'documents:created', 6, 8
+
 
     describe 'by index', ->
 
